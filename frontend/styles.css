@@ -236,6 +236,16 @@ button { font: inherit; color: inherit; }
   line-height: 0.9;
   font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 300;
 }
+.header__time {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-style: italic;
+  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 320;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
 .header__sep {
   color: var(--ink-muted);
   font-family: var(--font-body);

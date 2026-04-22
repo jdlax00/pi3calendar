@@ -127,6 +127,12 @@
     $("hdr-month").textContent = MONTHS_FULL[now.getMonth()];
     $("hdr-day").textContent = String(now.getDate());
 
+    let hh = now.getHours();
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ampm = hh >= 12 ? "PM" : "AM";
+    hh = hh % 12 || 12;
+    $("hdr-time").textContent = `${hh}:${mm} ${ampm}`;
+
     const w = STATE.weather;
     if (!w) return;
     $("hdr-wtemp").textContent = `${w.current.temp_f}°`;
