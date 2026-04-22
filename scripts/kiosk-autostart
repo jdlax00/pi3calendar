@@ -1,0 +1,23 @@
+# Append these lines to ~/.config/lxsession/LXDE-pi/autostart on the Pi.
+# The GPU flags are load-bearing for backdrop-filter on VideoCore IV —
+# without --ignore-gpu-blocklist, Chromium silently falls back to a CPU
+# path and the glass effect becomes unusable.
+@xset s off
+@xset -dpms
+@xset s noblank
+@unclutter -idle 0
+@chromium-browser \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-translate \
+  --disable-pinch \
+  --overscroll-history-navigation=0 \
+  --check-for-update-interval=604800 \
+  --enable-gpu-rasterization \
+  --ignore-gpu-blocklist \
+  --enable-zero-copy \
+  --use-gl=egl \
+  --enable-features=VaapiVideoDecoder \
+  --remote-debugging-port=9222 \
+  http://localhost:5000

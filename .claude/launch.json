@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "picalendar",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": ["-m", "backend.app"],
+      "port": 5000,
+      "autoPort": true,
+      "env": {
+        "PICAL_FIXTURES": "1"
+      }
+    }
+  ]
+}

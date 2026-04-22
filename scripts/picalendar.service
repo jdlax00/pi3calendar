@@ -1,0 +1,22 @@
+[Unit]
+Description=piCalendar backend (Flask)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/picalendar
+Environment=PYTHONUNBUFFERED=1
+Environment=PICAL_CONFIG=/home/pi/picalendar/config.json
+ExecStart=/home/pi/picalendar/.venv/bin/python -m backend.app
+Restart=on-failure
+RestartSec=5s
+
+# The Pi's 1GB RAM is the constraint. Cap to stay friendly.
+MemoryHigh=256M
+MemoryMax=384M
+
+[Install]
+WantedBy=multi-user.target
