@@ -119,44 +119,78 @@ scp -r . pi@<pi-ip>:~/picalendar
 
 ## 7. Create your Google OAuth credentials (do this on your laptop)
 
-You only do this once per household.
+You only do this once per household. **Heads up:** Google rebranded the
+OAuth consent flow to "Google Auth Platform" in 2024–25. The steps
+below match the current UI. If Google moves things again, the rough
+shape — _configure consent → publish → create a Desktop client_ — will
+be the same.
+
+### 7a. Create the project and enable the API
 
 1. Go to https://console.cloud.google.com and sign in with the Google
    account whose calendars you want to see.
-2. Click the project dropdown at the top → **New Project** → name it
-   `picalendar` → **Create**.
-3. In the left nav: **APIs & Services → Library** → search **Google
-   Calendar API** → click it → **Enable**.
-4. **APIs & Services → OAuth consent screen** →
-   - User Type: **External** → Create
-   - App name: `piCalendar`
-   - User support email + developer contact: your email
-   - Save and Continue through Scopes (leave empty) and Test Users
-     (add your own Google email as a test user) → Back to Dashboard
-   - Under _Publishing status_, click **Publish App** (optional but
-     means the token won't expire every 7 days — recommended for an
-     always-on display)
-5. **APIs & Services → Credentials → + Create Credentials → OAuth
-   client ID**
+2. Project dropdown (top of page) → **New Project** → name it
+   `picalendar` → **Create**. Make sure the dropdown now shows
+   `picalendar` before continuing.
+3. Left nav: **APIs & Services → Library** → search
+   **Google Calendar API** → click it → **Enable**.
+
+### 7b. Configure the consent screen (new "Google Auth Platform" wizard)
+
+4. Left nav: **APIs & Services → OAuth consent screen**. You'll land on
+   a page titled **Google Auth Platform** with a **Get Started** button.
+   Click it. Four steps:
+   1. **App Information** — App name: `piCalendar`, User support email:
+      your email → Next
+   2. **Audience** — **External** → Next
+   3. **Contact Information** — your email → Next
+   4. **Finish** — check _I agree to the User Data Policy_ →
+      **Continue** → **Create**
+
+   You now see a dashboard with left-nav tabs: Overview, Branding,
+   Audience, Clients, Data Access, Verification Center.
+
+### 7c. Publish the app
+
+Why: in _Testing_ mode Google revokes your refresh token after 7 days.
+For an always-on display you want _In production_.
+
+5. Click the **Audience** tab. At the top you'll see:
+
+   > Publishing status: **Testing**
+   > User type: External
+   > [ Publish app ]
+
+   Click **Publish app** → **Confirm**. Status flips to **In production**.
+
+   Your app will be unverified — that's fine for personal use. When you
+   sign in during OAuth (step 10 in this guide), Google will warn
+   _"Google hasn't verified this app."_ Click **Advanced → Go to
+   piCalendar (unsafe)** once and you're through.
+
+### 7d. Create the Desktop OAuth client
+
+6. Still in Google Auth Platform, click the **Clients** tab →
+   **+ Create Client**. (Equivalent path: _APIs & Services → Credentials
+   → + Create Credentials → OAuth client ID_.)
    - Application type: **Desktop app**
    - Name: `picalendar-pi`
-   - Create
-6. Click the download icon on the new credential → you get a JSON file.
-7. Copy that JSON to the Pi:
+   - **Create**
 
-   ```bash
-   # on your laptop:
-   scp ~/Downloads/client_secret_*.json \
-       pi@<pi-ip>:/home/pi/.config/picalendar/credentials.json
-   ```
+7. A dialog shows the new client ID. Click **Download JSON** (cloud-
+   download icon). You get `client_secret_XXXXXX.json` in your
+   Downloads folder.
 
-   If `~/.config/picalendar/` doesn't exist on the Pi yet, create it
-   first:
+### 7e. Copy the credentials to the Pi
 
-   ```bash
-   # on the Pi:
-   mkdir -p ~/.config/picalendar
-   ```
+```bash
+# on the Pi first:
+mkdir -p ~/.config/picalendar
+
+# then on your laptop:
+scp ~/Downloads/client_secret_*.json \
+    pi@<pi-ip>:/home/pi/.config/picalendar/credentials.json
+```
 
 ## 8. Edit `config.json`
 
