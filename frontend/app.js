@@ -17,9 +17,9 @@
   // Visible hour window on the grid. Exclusive end — [7, 23) = 7 AM through 10:59 PM.
   // 16 rows fills the grid comfortably at 1080p; short events use a compact
   // card style (smaller font, tighter padding) so they still read cleanly.
-  const HOUR_START = 7;
-  const HOUR_END = 23;
-  const HOURS_COUNT = HOUR_END - HOUR_START; // 16
+  const HOUR_START = 8;
+  const HOUR_END = 24;
+  const HOURS_COUNT = HOUR_END - HOUR_START; // 16 (8am through 11pm)
   const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WEEKDAYS_FULL = [
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",

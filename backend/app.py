@@ -15,6 +15,11 @@ CONFIG_PATH = Path(os.environ.get("PICAL_CONFIG", ROOT / "config.json"))
 
 USE_FIXTURES = os.environ.get("PICAL_FIXTURES", "") == "1"
 
+# Events whose title contains any of these substrings (case-insensitive) are
+# filtered out before being sent to the client. Useful for hiding noisy
+# recurring meetings the family doesn't want on the living-room display.
+HIDDEN_TITLE_SUBSTRINGS = ("wildebeast",)
+
 
 app = Flask(__name__, static_folder=None)
 
@@ -83,6 +88,17 @@ def api_config():
     })
 
 
+def _filter_hidden(events: list[dict]) -> list[dict]:
+    """Strip out events whose title matches any HIDDEN_TITLE_SUBSTRINGS."""
+    if not HIDDEN_TITLE_SUBSTRINGS:
+        return events
+    needles = tuple(s.lower() for s in HIDDEN_TITLE_SUBSTRINGS)
+    return [
+        e for e in events
+        if not any(n in (e.get("title") or "").lower() for n in needles)
+    ]
+
+
 @app.get("/api/events")
 def api_events():
     start = request.args.get("start")
@@ -95,10 +111,10 @@ def api_events():
 
     cfg = load_config()
     if cfg.get("fixtures") or USE_FIXTURES:
-        return jsonify({"events": fixtures.fixture_events(start)})
+        return jsonify({"events": _filter_hidden(fixtures.fixture_events(start))})
 
     from . import google_calendar
-    return jsonify({"events": google_calendar.list_all_events(start, end)})
+    return jsonify({"events": _filter_hidden(google_calendar.list_all_events(start, end))})
 
 
 @app.get("/api/weather")
