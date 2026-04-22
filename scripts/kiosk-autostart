@@ -1,4 +1,9 @@
 # Append these lines to ~/.config/lxsession/LXDE-pi/autostart on the Pi.
+#
+# On Raspberry Pi OS Trixie (Debian 13) and later the binary is `chromium`.
+# On Bookworm (Debian 12) and earlier it's `chromium-browser`. The installer
+# rewrites this file with the correct name for your system.
+#
 # The GPU flags are load-bearing for backdrop-filter on VideoCore IV —
 # without --ignore-gpu-blocklist, Chromium silently falls back to a CPU
 # path and the glass effect becomes unusable.
@@ -6,7 +11,7 @@
 @xset -dpms
 @xset s noblank
 @unclutter -idle 0
-@chromium-browser \
+@chromium \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \

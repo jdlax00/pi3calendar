@@ -21,9 +21,18 @@ fi
 # 1. System packages
 echo "==> apt deps"
 sudo apt-get update
+
+# Chromium package name differs across Raspberry Pi OS releases:
+#   Bookworm (Debian 12) and earlier → chromium-browser
+#   Trixie   (Debian 13) and later   → chromium
+CHROMIUM_PKG="chromium"
+if ! apt-cache show chromium >/dev/null 2>&1; then
+  CHROMIUM_PKG="chromium-browser"
+fi
+
 sudo apt-get install -y \
   python3 python3-venv python3-pip \
-  chromium-browser unclutter xdotool
+  "${CHROMIUM_PKG}" unclutter xdotool x11-xserver-utils
 
 # 2. Python virtualenv
 echo "==> venv + pip deps"
@@ -54,7 +63,9 @@ touch "${AUTOSTART}"
 if ! grep -q "picalendar kiosk" "${AUTOSTART}"; then
   echo "" >> "${AUTOSTART}"
   echo "# picalendar kiosk" >> "${AUTOSTART}"
-  cat "${REPO_DIR}/scripts/kiosk-autostart" >> "${AUTOSTART}"
+  # Rewrite the @chromium line to whichever binary is actually installed.
+  sed "s|^@chromium |@${CHROMIUM_PKG} |" \
+    "${REPO_DIR}/scripts/kiosk-autostart" >> "${AUTOSTART}"
 fi
 
 echo
