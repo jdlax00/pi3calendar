@@ -13,6 +13,10 @@
   <div class="bg" aria-hidden="true">
     <div class="bg__layer bg__layer--day"></div>
     <div class="bg__layer bg__layer--night"></div>
+    <!-- Night-only screen-blended lamp glow that genuinely illuminates the
+         lower-right quadrant rather than just tinting it. Fades in with the
+         night theme via CSS opacity transition. -->
+    <div class="bg__lamp" aria-hidden="true"></div>
     <div class="bg__grain"></div>
   </div>
 
@@ -55,6 +59,43 @@
       </div>
     </section>
   </main>
+
+  <!-- Event detail popup — remote-control driven. Modeless: it tracks the
+       currently focused event and repopulates as arrow keys move focus.
+       Shown via [hidden] toggle; positioned absolutely next to the focused
+       event (see positionDetail() in app.js). -->
+  <div class="event-detail glass glass--deep" id="event-detail" role="dialog" aria-modal="false" aria-labelledby="event-detail-title" hidden>
+    <div class="event-detail__stripe" aria-hidden="true"></div>
+    <div class="event-detail__body">
+      <div class="event-detail__meta">
+        <span class="event-detail__cal" id="event-detail-cal"></span>
+        <span class="event-detail__time" id="event-detail-time"></span>
+      </div>
+      <h2 class="event-detail__title" id="event-detail-title"></h2>
+
+      <div class="event-detail__row event-detail__row--location" id="event-detail-location-row" hidden>
+        <span class="event-detail__label">Location</span>
+        <span class="event-detail__text" id="event-detail-location"></span>
+      </div>
+      <div class="event-detail__row event-detail__row--organizer" id="event-detail-organizer-row" hidden>
+        <span class="event-detail__label">Organizer</span>
+        <span class="event-detail__text" id="event-detail-organizer"></span>
+      </div>
+      <div class="event-detail__row event-detail__row--attendees" id="event-detail-attendees-row" hidden>
+        <span class="event-detail__label">Attendees</span>
+        <span class="event-detail__text" id="event-detail-attendees"></span>
+      </div>
+      <p class="event-detail__description" id="event-detail-description" hidden></p>
+      <div class="event-detail__row event-detail__row--link" id="event-detail-link-row" hidden>
+        <span class="event-detail__label">Open in Google</span>
+        <span class="event-detail__text event-detail__text--link" id="event-detail-link"></span>
+      </div>
+
+      <div class="event-detail__hint">
+        <kbd>←</kbd><kbd>→</kbd> browse &nbsp; <kbd>Esc</kbd> close
+      </div>
+    </div>
+  </div>
 
   <template id="tpl-forecast-pill">
     <div class="pill glass">

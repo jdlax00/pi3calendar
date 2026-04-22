@@ -85,25 +85,30 @@
   color-scheme: light;
 }
 
-/* Night — "Candlelit Atelier".
-   Obsidian ground with verdigris undertone; warm lamp-glow from the lower
-   right; type in bone-parchment; hero numerals and now-line cast in 22k
-   gold leaf with a soft bloom so they appear self-luminous. Glass turns
-   refractive (cut-crystal) rather than frosted.  */
+/* Night — "The Black Lacquer Box".
+   Obsidian ground, not a "dark green room." Gold becomes the single vivid
+   material in the interface: every glass surface is framed by a thin gilt
+   hairline (the biggest material shift from the previous iteration — cream
+   hairlines read as washed-out, gilt hairlines read as framed jewelry), the
+   hero numeral is clipped to a metallic gradient so it reads as actual gold
+   leaf rather than yellow ink, and a screen-blended lamp pool in the lower-
+   right genuinely *illuminates* the quadrant instead of tinting it.
+   Sage survives only as a trace undertone in the surface fill — a nod to
+   the kitchen's palette without being literal about it. */
 [data-theme="night"] {
-  --bg: #0c1310;                                  /* obsidian w/ green undertone */
-  --surface: rgba(32, 52, 42, 0.36);              /* dim verdigris patina */
-  --surface-strong: rgba(32, 52, 42, 0.62);
-  --surface-event: rgba(18, 32, 26, 0.80);        /* deeper so cards sit forward */
-  --surface-today: transparent;                   /* replaced by gradient below */
-  --ink: #ece7d4;                                 /* warm bone / aged parchment */
-  --ink-strong: #f7f1dd;                          /* cleaner bone for titles */
-  --ink-muted: #8a9380;                           /* tarnished sage ink */
-  --hairline: rgba(236, 231, 212, 0.17);
-  --hairline-soft: rgba(236, 231, 212, 0.06);
-  --accent: #d4af37;                              /* 22k gold leaf */
-  --accent-soft: rgba(212, 175, 55, 0.32);
-  --accent-glow: rgba(244, 206, 110, 0.55);       /* brighter bloom for self-lit accents */
+  --bg: #060709;                                    /* true obsidian */
+  --surface: rgba(22, 30, 28, 0.46);                /* black-glass, whisper of sage */
+  --surface-strong: rgba(22, 30, 28, 0.74);
+  --surface-event: rgba(14, 20, 18, 0.84);          /* near-opaque onyx cards */
+  --surface-today: transparent;                     /* replaced by gradient below */
+  --ink: #dcd5bc;                                   /* aged ivory */
+  --ink-strong: #f1ead0;                            /* champagne ivory for titles */
+  --ink-muted: #8a7f68;                             /* warm brass tarnish (was cool sage) */
+  --hairline: rgba(222, 192, 120, 0.24);            /* GILT — the material shift */
+  --hairline-soft: rgba(222, 192, 120, 0.09);
+  --accent: #e4c56a;                                /* living gold, more luminous than 22k leaf */
+  --accent-soft: rgba(228, 197, 106, 0.32);
+  --accent-glow: rgba(255, 222, 130, 0.60);
   --bg-day-opacity: 0;
   --bg-night-opacity: 1;
   color-scheme: dark;
@@ -157,22 +162,22 @@ button { font: inherit; color: inherit; }
 }
 .bg__layer--night {
   opacity: var(--bg-night-opacity);
-  /* One lamp, not four. Warm anchor in the lower-right (oil lamp on desk);
-     smaller hot core closer in; cool verdigris pooling upper-left; a broad
-     mid-tone through center so the glass has something to refract; a base
-     that tilts almost imperceptibly warm at the bottom. The whole scene
-     reads as lit from one direction, not evenly illuminated. */
+  /* Three pools, one ground. Previous iteration had five — the eye couldn't
+     find a focal point and the whole thing read as "evenly gloomy." Here the
+     lamp in the lower right is the only warm thing, one cool shadow in the
+     upper left gives the room volume, and the rest is honest obsidian. The
+     real illumination comes from .bg__lamp above in screen-blend mode. */
   background:
-    /* hot core — tight, just below the lamp's "position" */
-    radial-gradient(28% 24% at 84% 82%, #624311 0%, rgba(98, 67, 17, 0) 72%),
-    /* outer halo of the lamp glow */
-    radial-gradient(52% 48% at 76% 76%, #3c2a0d 0%, rgba(60, 42, 13, 0) 70%),
-    /* cool moonlight / room-shadow bloom in the upper left */
-    radial-gradient(55% 50% at 18% 22%, #152e24 0%, rgba(21, 46, 36, 0) 68%),
-    /* verdigris midtone wash through the center — the surface glass picks this up */
-    radial-gradient(78% 62% at 44% 52%, #102921 0%, rgba(16, 41, 33, 0) 72%),
-    /* ground: obsidian at top, tilting a touch warmer at the bottom */
-    linear-gradient(180deg, #09110d 0%, #0c1310 55%, #14100a 100%);
+    /* Hot core — tight, just inside the corner like a bulb */
+    radial-gradient(20% 18% at 86% 84%, #6b4416 0%, rgba(107, 68, 22, 0) 72%),
+    /* Lamp halo — broader amber wash fading out across the lower-right */
+    radial-gradient(48% 42% at 76% 78%, #321f0a 0%, rgba(50, 31, 10, 0) 74%),
+    /* Shadow pool upper-left — a shade deeper than ambient so the room
+       has directional volume rather than reading as flat black */
+    radial-gradient(42% 38% at 14% 18%, #030406 0%, rgba(3, 4, 6, 0) 70%),
+    /* Ground: obsidian, warming almost imperceptibly at the bottom as if
+       the lamp's influence is pooling on the "floor" */
+    linear-gradient(180deg, #050608 0%, #070809 48%, #0c0a06 100%);
 }
 .bg__grain {
   position: absolute;
@@ -184,12 +189,46 @@ button { font: inherit; color: inherit; }
 /* Night grain reads as linen / old parchment rather than digital noise —
    stronger opacity, soft-light blend so it integrates with the warm ground. */
 [data-theme="night"] .bg__grain {
-  opacity: 0.26;
+  opacity: 0.28;
   mix-blend-mode: soft-light;
 }
 /* Contemplative drift at night: slower, smaller amplitude. */
 [data-theme="night"] .bg__layer--night {
   animation-duration: 120s;
+}
+
+/* Lamp overlay — the move that turns the night bg from "painted gradient"
+   into "actually lit room." Screen-blend adds warm light to whatever's
+   underneath; the previous theme only *tinted* the quadrant, this one
+   *illuminates* it. Only visible at night (opacity gated by [data-theme]).
+   A single layer, no animation — Pi 3 friendly. */
+.bg__lamp {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 2s ease;
+  pointer-events: none;
+  background: radial-gradient(38% 32% at 86% 84%,
+    rgba(255, 205, 130, 0.14) 0%,
+    rgba(255, 205, 130, 0.05) 40%,
+    rgba(255, 205, 130, 0)    72%);
+  mix-blend-mode: screen;
+}
+[data-theme="night"] .bg__lamp { opacity: 1; }
+
+/* Night-only edge vignette — frames the content area and pools attention
+   toward the middle-upper-third where the hero numeral lives. Drawn above
+   the bg layers (z-index -1) but below the app content (z-index auto/0),
+   so it darkens the background without touching foreground surfaces. */
+[data-theme="night"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(120% 90% at 50% 42%,
+    transparent 52%,
+    rgba(0, 0, 0, 0.28) 100%);
 }
 
 @keyframes bgdrift {
@@ -588,6 +627,44 @@ button { font: inherit; color: inherit; }
   line-height: 1.02;
 }
 
+/* ---------- Focus cursor (remote-control highlight) --------------------
+   A single event at a time gets .focus. Treatment: accent ring, a soft
+   outer bloom, a small scale lift, and z-index bump so overlap clusters
+   let the selected card sit on top. Day and night both use --accent so
+   the ring follows the theme without a second stylesheet path. */
+.event.focus,
+.alldaypill.focus {
+  z-index: 6;  /* above neighbors, below now-line (5) — actually above now-line
+                  because we want it readable during navigation */
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    0 0 0 calc(var(--u) * 0.35) var(--accent-soft),
+    0 calc(var(--u) * 0.4) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.18);
+  transform: scale(1.015);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.alldaypill.focus {
+  transform: scale(1.04);
+}
+/* Night: the ring itself glows gold — reuse --accent-glow for the bloom so
+   the focus ring matches the luminous vocabulary of the now-line + hero numeral. */
+[data-theme="night"] .event.focus,
+[data-theme="night"] .alldaypill.focus {
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    0 0 calc(var(--u) * 0.25) var(--accent-glow),
+    0 0 calc(var(--u) * 0.9)  var(--accent-soft),
+    0 calc(var(--u) * 0.4) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.45);
+}
+/* Perf-lite: drop the glow, keep a crisp ring so the focus is still obvious. */
+[data-perf="lite"] .event.focus,
+[data-perf="lite"] .alldaypill.focus {
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transform: none;
+}
+
 /* ---------- Load-in animation ------------------------------------------ */
 .app > * {
   opacity: 0;
@@ -616,71 +693,113 @@ button { font: inherit; color: inherit; }
    (see --ignore-gpu-blocklist); the perf-lite probe will still halve them
    if the initial render measures badly. */
 [data-theme="night"] .glass {
-  -webkit-backdrop-filter: blur(28px) saturate(170%) brightness(0.96);
-  backdrop-filter: blur(28px) saturate(170%) brightness(0.96);
+  -webkit-backdrop-filter: blur(28px) saturate(175%) brightness(0.94);
+  backdrop-filter: blur(28px) saturate(175%) brightness(0.94);
   box-shadow:
+    /* Gilt frame — the hairline tokens are now warm gold, so these inset
+       lines read as picture-frame gilding rather than cold highlight */
     inset 0 0 0 1px var(--hairline),
     inset 0 1px 0 var(--hairline-soft),
-    inset 0 -1px 0 rgba(10, 14, 10, 0.35),
-    0 calc(var(--u) * 0.5) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.35);
+    /* Crisper dark rim along the bottom edge — sells the "lacquer pane"
+       read against the lit ground */
+    inset 0 -1px 0 rgba(4, 6, 4, 0.55),
+    /* Outer: soft drop-shadow for depth + a whisper of warm gold bloom so
+       the glass appears to catch the lamp's ambient light rather than float
+       unlit. Two separate shadows combine cheaply on one layer */
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.45),
+    0 0 calc(var(--u) * 1.8) rgba(228, 197, 106, 0.045);
 }
 [data-theme="night"] .glass--deep {
-  -webkit-backdrop-filter: blur(44px) saturate(185%) brightness(0.98);
-  backdrop-filter: blur(44px) saturate(185%) brightness(0.98);
+  -webkit-backdrop-filter: blur(44px) saturate(190%) brightness(0.96);
+  backdrop-filter: blur(44px) saturate(190%) brightness(0.96);
 }
 
 /* Shaft-of-light today column — a directional gradient fading downward,
    not a flat tint. Gets warmer near the day-header (top) and fades to
    nearly nothing at the bottom of the grid, as if lamp-light is spilling
-   down from above. */
+   down from above. Slightly pulled back vs. previous iteration so it
+   supports the hero numeral rather than competing with it. */
 [data-theme="night"] .col--today {
   background: linear-gradient(
     180deg,
-    rgba(212, 175, 55, 0.15) 0%,
-    rgba(212, 175, 55, 0.08) 35%,
-    rgba(212, 175, 55, 0.03) 75%,
-    rgba(212, 175, 55, 0.0)  100%
+    rgba(228, 197, 106, 0.13) 0%,
+    rgba(228, 197, 106, 0.065) 32%,
+    rgba(228, 197, 106, 0.02) 72%,
+    rgba(228, 197, 106, 0.0)  100%
   );
+  /* A hair of warm outline on the leading edge — as if the gold light
+     catches the column's left border on its way down */
+  box-shadow: inset 1px 0 0 rgba(228, 197, 106, 0.14);
 }
 
 /* ------- Gold-leaf hero numeral (the moment) -------
-   The big date number shifts from ink to luminous gold at night, with a
-   soft two-layer halo (tight + wide) so it reads as genuinely self-lit
-   rather than just colored. Variable-font weight drops a touch so the
-   gold feels airy, like goldsmith leaf rather than dense metal. */
+   This is the one piece of the whole interface that exists to be *stunning*.
+   Three tricks stacked:
+   1. background-clip: text with a 3-stop metallic gradient — bright champagne
+      at top, living gold in the middle, aged-brass at the bottom. Reads as
+      actual gold leaf catching light unevenly, not a flat yellow color.
+   2. filter: drop-shadow (not text-shadow) for the halo. drop-shadow respects
+      the clipped-text alpha, so the glow traces the glyph shape rather than
+      escaping to a rectangular bounding box — the difference between "gold
+      text on dark" and "gold text casting its own light on dark."
+   3. Two stacked drop-shadows: a tight warm core + a wide ember-colored bloom.
+      Chromium batches these in one filter pass so it's one GPU shader, not two. */
 [data-theme="night"] .header__day {
-  color: var(--accent);
-  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 280;
-  text-shadow:
-    0 0 calc(var(--u) * 0.35) rgba(212, 175, 55, 0.30),
-    0 0 calc(var(--u) * 1.2)  rgba(212, 175, 55, 0.12);
+  color: transparent;
+  background: linear-gradient(175deg,
+    #fbebb0 0%,     /* champagne highlight */
+    #e4c56a 42%,    /* living gold */
+    #b78a38 78%,    /* aged brass shadow */
+    #d9b555 100%);  /* subtle warm bottom catch */
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 340;
+  filter:
+    drop-shadow(0 0 calc(var(--u) * 0.35) rgba(228, 197, 106, 0.42))
+    drop-shadow(0 0 calc(var(--u) * 1.3)  rgba(228, 197, 106, 0.14));
 }
 
 /* ------- Luminous now-line -------
-   Bright core, warm outer bloom, and a faint third halo so it reads as a
-   filament in a dim room, not a colored rule. */
+   A thin tungsten filament across the week: near-white hot at center,
+   cooling to living gold at the edges, with three stacked halos so the
+   bloom fades convincingly into the dark grid. */
 [data-theme="night"] .week__now {
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-glow) 50%, var(--accent) 100%);
+  background: linear-gradient(90deg,
+    var(--accent) 0%,
+    #fff1b8 48%,            /* near-white hot core */
+    #fff1b8 52%,
+    var(--accent) 100%);
   box-shadow:
-    0 0 calc(var(--u) * 0.25) var(--accent-glow),
-    0 0 calc(var(--u) * 0.8)  var(--accent-soft),
-    0 0 calc(var(--u) * 2)    rgba(212, 175, 55, 0.12);
+    0 0 calc(var(--u) * 0.22) var(--accent-glow),
+    0 0 calc(var(--u) * 0.75) var(--accent-soft),
+    0 0 calc(var(--u) * 1.9)  rgba(228, 197, 106, 0.14);
 }
+/* The dot anchored to the left gutter is the brightest thing on the grid —
+   treat it like a tungsten bulb: white-hot center, gold mantle, ember-warm
+   outer halo. Radial gradient does the core-to-shell gradient in one paint. */
 [data-theme="night"] .week__now::before {
+  background: radial-gradient(circle,
+    #fff3c8 0%,
+    var(--accent) 55%,
+    #b78a38 100%);
   box-shadow:
     0 0 calc(var(--u) * 0.3) var(--accent-glow),
-    0 0 calc(var(--u) * 0.9) var(--accent-soft);
+    0 0 calc(var(--u) * 0.9) var(--accent-soft),
+    0 0 calc(var(--u) * 1.8) rgba(228, 197, 106, 0.10);
 }
 
-/* Today header numeral picks up a tighter halo — same material, smaller scale. */
+/* Today header numeral picks up a tighter halo — same material, smaller scale.
+   The hero numeral is the main event, so this one stays quieter. */
 [data-theme="night"] .dayhead--today .dayhead__num {
-  text-shadow: 0 0 calc(var(--u) * 0.3) rgba(212, 175, 55, 0.35);
+  text-shadow: 0 0 calc(var(--u) * 0.3) rgba(228, 197, 106, 0.38);
 }
 
-/* Weather temp in header gets the same warm lift (cream -> faint bone glow)
-   so the two hero numerals on the header row feel like a matched pair. */
+/* Weather temp: deliberately left unglowed. Previous iteration halo'd it too,
+   which diluted the "hero date is the one luminous thing" effect. Here the
+   temperature reads as warm champagne ink, catching the lamp's ambient warmth
+   via the ink-strong token rather than its own light. */
 [data-theme="night"] .header__wtemp {
-  text-shadow: 0 0 calc(var(--u) * 0.5) rgba(236, 231, 212, 0.10);
+  color: var(--ink-strong);
 }
 
 /* Event stripes emit a hint of their calendar color into the card body —
@@ -716,9 +835,19 @@ button { font: inherit; color: inherit; }
 }
 [data-perf="lite"] .bg__layer { animation: none; transform: none; }
 [data-perf="lite"] .week__now { animation: none; }
-/* Drop the gold-leaf halos in lite mode — big text-shadows are the first
-   thing to jank when compositing is weak. Keep the gold color, lose the glow. */
-[data-perf="lite"][data-theme="night"] .header__day,
+/* Drop the gold-leaf halos in lite mode — big text-shadows and filter
+   drop-shadows are the first thing to jank when compositing is weak.
+   Keep the gold color, lose the bloom; skip the screen-blend lamp and
+   the vignette since both are extra composite layers. */
+[data-perf="lite"][data-theme="night"] .header__day {
+  /* Back out the gradient-clip and filter-drop-shadow — revert to a flat
+     accent fill so there's zero GPU cost on the hero numeral */
+  color: var(--accent);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  filter: none;
+}
 [data-perf="lite"][data-theme="night"] .week__now,
 [data-perf="lite"][data-theme="night"] .week__now::before,
 [data-perf="lite"][data-theme="night"] .dayhead--today .dayhead__num,
@@ -726,6 +855,11 @@ button { font: inherit; color: inherit; }
   text-shadow: none;
   box-shadow: none;
 }
+[data-perf="lite"][data-theme="night"] .week__now::before {
+  background: var(--accent);
+}
+[data-perf="lite"] .bg__lamp { display: none; }
+[data-perf="lite"][data-theme="night"] body::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .bg__layer { animation: none; transform: none; }
