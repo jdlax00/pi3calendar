@@ -665,6 +665,193 @@ button { font: inherit; color: inherit; }
   transform: none;
 }
 
+/* ---------- Event detail popup (Phase 1B) ------------------------------
+   Modeless glass panel anchored next to the focused event. Positioned via
+   inline left/top from app.js (positionDetail()); this stylesheet owns the
+   *appearance*, not the geometry. Uses .glass + .glass--deep for the blur
+   tier so it naturally picks up the day/night palette.  */
+.event-detail {
+  /* Positioning — left/top written by JS each time focus or viewport changes.
+     Width is clamped so short events still get a readable panel and long
+     descriptions don't sprawl across the screen. */
+  position: absolute;
+  z-index: 50;
+  width: clamp(22rem, 28vw, 32rem);
+  max-height: min(72vh, 40rem);
+  overflow: auto;
+  padding: calc(var(--u) * 0.9);
+  border-radius: var(--r-lg);
+  color: var(--ink);
+
+  /* A drop-shadow that reads as the popup *floating* above the grid,
+     not sitting flat against it. Heavier than the ambient .glass shadow. */
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    inset 0 1px 0 var(--hairline-soft),
+    0 calc(var(--u) * 0.8) calc(var(--u) * 2.2) rgba(0, 0, 0, 0.22);
+
+  /* Layout: a thin left stripe + the body column side by side */
+  display: grid;
+  grid-template-columns: max(4px, 0.3vw) 1fr;
+  gap: calc(var(--u) * 0.9);
+  align-items: stretch;
+}
+.event-detail[hidden] { display: none; }
+
+.event-detail__stripe {
+  /* Background color is set inline from ev.color (same as the event card) so
+     the popup reads as an extension of the card you just opened. */
+  border-radius: max(2px, 0.15vw);
+  align-self: stretch;
+  min-height: calc(var(--u) * 2);
+  opacity: 0.9;
+}
+
+.event-detail__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.55);
+}
+
+.event-detail__meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.5);
+  font-size: var(--t-label);
+  color: var(--ink-muted);
+}
+.event-detail__cal {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+}
+.event-detail__time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+
+.event-detail__title {
+  /* The hero element inside the popup — serif, heavier optical size than the
+     event cards so it feels like a proper display setting. */
+  margin: 0;
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 96, "SOFT" 100, "wght" 380;
+  font-size: calc(var(--t-display) * 0.78);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink-strong);
+}
+
+/* Rows: label + text inline. The label is the editorial small-caps marker
+   (Location / Organizer / ...), the text is the actual content. */
+.event-detail__row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: calc(var(--u) * 0.7);
+  align-items: baseline;
+  font-size: var(--t-body);
+}
+.event-detail__row[hidden] { display: none; }
+.event-detail__label {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: var(--t-label);
+  font-weight: 500;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  /* Lift slightly so the small-caps label aligns optically with the title-
+     cased body text — baseline alone makes the label look sunk. */
+  transform: translateY(-0.05em);
+}
+.event-detail__text {
+  color: var(--ink);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.event-detail__text--link {
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+  letter-spacing: 0;
+  word-break: break-all;
+}
+
+.event-detail__description {
+  /* Full-width description — no label column, spans both grid columns of
+     the body by virtue of being a direct child of body not a __row.
+     A serif body setting here makes long-form text read like a note rather
+     than UI text — earns the description some editorial weight. */
+  margin: 0;
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 48, "SOFT" 80, "wght" 360;
+  font-size: calc(var(--t-body) * 0.98);
+  line-height: 1.45;
+  color: var(--ink);
+  /* A hairline separator above it so it visually distinguishes from the
+     label/value rows that came before. */
+  padding-top: calc(var(--u) * 0.55);
+  border-top: 1px solid var(--hairline-soft);
+  max-height: 14em;
+  overflow: auto;
+}
+.event-detail__description[hidden] { display: none; }
+
+/* The hint strip is the editorial byline at the bottom — keycaps + small muted
+   text that says "you can navigate / close from here." Typographic signal that
+   this is a modeless surface, not a modal dialog that traps focus. */
+.event-detail__hint {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.3);
+  font-size: calc(var(--t-small) * 0.9);
+  color: var(--ink-muted);
+  padding-top: calc(var(--u) * 0.35);
+  border-top: 1px solid var(--hairline-soft);
+  letter-spacing: 0.04em;
+}
+.event-detail__hint kbd {
+  display: inline-block;
+  padding: 0 calc(var(--u) * 0.35);
+  min-width: calc(var(--u) * 1.1);
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: calc(var(--t-small) * 0.88);
+  font-weight: 500;
+  color: var(--ink);
+  background-color: var(--surface-strong);
+  border-radius: var(--r-sm);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    inset 0 -1px 0 var(--hairline-soft);
+  line-height: 1.6;
+  margin: 0 1px;
+}
+
+/* Night: the popup stripe casts the same colored bloom into the body as
+   the event card stripe does — consistent material vocabulary. */
+[data-theme="night"] .event-detail__stripe {
+  box-shadow: 0 0 calc(var(--u) * 0.4) currentColor;
+}
+/* Link text glows a touch at night so the Google URL reads as the one
+   live element on the card. */
+[data-theme="night"] .event-detail__text--link {
+  text-shadow: 0 0 calc(var(--u) * 0.3) var(--accent-soft);
+}
+
+[data-perf="lite"] .event-detail {
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.3);
+}
+[data-perf="lite"] .event-detail__stripe,
+[data-perf="lite"] .event-detail__text--link {
+  box-shadow: none;
+  text-shadow: none;
+}
+
 /* ---------- Load-in animation ------------------------------------------ */
 .app > * {
   opacity: 0;

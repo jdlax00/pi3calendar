@@ -406,12 +406,13 @@
   // A single event in STATE.focus.eventId is "highlighted." Arrow keys move
   // the highlight; Enter opens details (Phase 1B); Escape clears.
   //
-  // Left / Right  — previous / next event in chronological order across the
+  // Up / Down     — previous / next event in chronological order across the
   //                 visible 7-day window (all-day events sort first on their
-  //                 day, treated as posMin = -1).
-  // Up / Down     — move to the adjacent day column; within that column, pick
-  //                 the event whose start-of-day minute is closest to the
-  //                 currently focused event's. No wraparound.
+  //                 day, treated as posMin = -1). No wraparound.
+  // Left / Right  — jump to the first event of the previous / next populated
+  //                 day. If the adjacent day has no events, keep walking (so
+  //                 pressing → from an event on Monday lands on Wednesday
+  //                 when Tuesday is empty). At the edges, do nothing.
 
   function visibleDayIndex(ev) {
     // Returns 0..6 for the day column this event lives in, or -1 if it's
@@ -483,26 +484,42 @@
 
     const current = items[idx];
 
-    if (direction === "prev") {
+    // Up / Down: step through the flat chronological list. No wraparound
+    // at the edges — pressing up on the earliest event just stays put.
+    if (direction === "up") {
       if (idx > 0) setFocus(items[idx - 1].ev.id);
       return;
     }
-    if (direction === "next") {
+    if (direction === "down") {
       if (idx < items.length - 1) setFocus(items[idx + 1].ev.id);
       return;
     }
-    if (direction === "up" || direction === "down") {
-      const targetDay = current.dayIdx + (direction === "up" ? -1 : 1);
-      if (targetDay < 0 || targetDay > 6) return;
-      const candidates = items.filter((it) => it.dayIdx === targetDay);
-      if (candidates.length === 0) return;
-      let best = candidates[0];
-      let bestDist = Math.abs(best.posMin - current.posMin);
-      for (let i = 1; i < candidates.length; i++) {
-        const d = Math.abs(candidates[i].posMin - current.posMin);
-        if (d < bestDist) { best = candidates[i]; bestDist = d; }
+
+    // Left / Right: jump to the first event of the previous / next *populated*
+    // day column. Walking past empty days means → from Monday lands on
+    // Wednesday when Tuesday is bare, which feels more useful than stalling.
+    // Since `items` is sorted (dayIdx ASC, posMin ASC), the first entry with
+    // a given dayIdx is automatically that day's earliest event.
+    if (direction === "nextDay") {
+      for (let i = idx + 1; i < items.length; i++) {
+        if (items[i].dayIdx > current.dayIdx) {
+          setFocus(items[i].ev.id);
+          return;
+        }
       }
-      setFocus(best.ev.id);
+      return;  // no later day has any events
+    }
+    if (direction === "prevDay") {
+      // Walk backward; the FIRST event we encounter on an earlier day may
+      // not be that day's first (since we'd hit its last first). So collect
+      // the earlier day's index, then pick items.find(it => it.dayIdx === d).
+      let targetDay = -1;
+      for (let i = idx - 1; i >= 0; i--) {
+        if (items[i].dayIdx < current.dayIdx) { targetDay = items[i].dayIdx; break; }
+      }
+      if (targetDay < 0) return;  // no earlier day has any events
+      const first = items.find((it) => it.dayIdx === targetDay);
+      if (first) setFocus(first.ev.id);
     }
   }
 
@@ -514,17 +531,17 @@
         return;
       }
       switch (e.key) {
-        case "ArrowLeft":  e.preventDefault(); moveFocus("prev"); break;
-        case "ArrowRight": e.preventDefault(); moveFocus("next"); break;
-        case "ArrowUp":    e.preventDefault(); moveFocus("up");   break;
-        case "ArrowDown":  e.preventDefault(); moveFocus("down"); break;
+        case "ArrowLeft":  e.preventDefault(); moveFocus("prevDay"); break;
+        case "ArrowRight": e.preventDefault(); moveFocus("nextDay"); break;
+        case "ArrowUp":    e.preventDefault(); moveFocus("up");      break;
+        case "ArrowDown":  e.preventDefault(); moveFocus("down");    break;
         case "Enter":
           e.preventDefault();
           if (STATE.detail.open) {
             closeDetail();
           } else {
             // No focus yet → land on something reasonable, then open.
-            if (!STATE.focus.eventId) moveFocus("next");
+            if (!STATE.focus.eventId) moveFocus("down");
             if (STATE.focus.eventId) openDetail();
           }
           break;
