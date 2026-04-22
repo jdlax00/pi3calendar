@@ -34,7 +34,8 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
 
     events: list[dict] = []
 
-    def add(day, start_h, end_h, title, cal, location=""):
+    def add(day, start_h, end_h, title, cal, location="",
+            description="", html_link="", organizer="", attendees=None):
         events.append({
             "id": f"e{len(events)}",
             "title": title,
@@ -44,9 +45,14 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
             "end": at(day, int(end_h), int((end_h % 1) * 60)),
             "all_day": False,
             "location": location,
+            "description": description,
+            "html_link": html_link,
+            "organizer": organizer,
+            "attendees": list(attendees or []),
         })
 
-    def add_allday(day, span, title, cal):
+    def add_allday(day, span, title, cal,
+                   description="", html_link="", organizer="", attendees=None):
         s, e = allday(day, span)
         events.append({
             "id": f"e{len(events)}",
@@ -57,6 +63,10 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
             "end": e,
             "all_day": True,
             "location": "",
+            "description": description,
+            "html_link": html_link,
+            "organizer": organizer,
+            "attendees": list(attendees or []),
         })
 
     # Day 0 (today)
@@ -65,11 +75,24 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
     add(0, 18, 19.5, "Dinner @ Mom's", "family")
 
     # Day 1
-    add(1, 8.5, 9, "Standup", "work")
-    add(1, 10, 11, "1:1 with Priya", "work")
+    add(1, 8.5, 9, "Standup", "work",
+        description="Daily engineering standup. Share yesterday / today / blockers.",
+        html_link="https://calendar.google.com/calendar/u/0/r/eventedit/FAKE_EV_STANDUP",
+        organizer="Engineering team",
+        attendees=["Priya Shah", "Sam Lin", "Alex Weber", "Taylor Kim"])
+    add(1, 10, 11, "1:1 with Priya", "work",
+        description="Bring notes on the Horizon migration and the Q3 staffing plan.",
+        html_link="https://calendar.google.com/calendar/u/0/r/eventedit/FAKE_EV_1ON1",
+        organizer="Priya Shah",
+        attendees=["Priya Shah"])
     add(1, 10.5, 11.5, "Design review", "work")  # overlaps
-    add(1, 12.5, 13, "Dentist", "personal")
-    add(1, 17, 18, "Piano lesson — Jack", "kids")
+    add(1, 12.5, 13, "Dentist", "personal",
+        location="Dr. Patel — 1440 K St NW, Suite 200",
+        description="Cleaning + follow-up on the crown. Arrive 10 min early for paperwork.",
+        organizer="Dr. Patel's office")
+    add(1, 17, 18, "Piano lesson — Jack", "kids",
+        location="Ms. Okafor's studio",
+        description="Recital piece: Gymnopédie No. 1. Bring the metronome.")
 
     # Day 2
     add(2, 9, 10, "Sprint planning", "work")
@@ -78,10 +101,15 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
     add(2, 19, 20.5, "Book club", "personal")
 
     # Day 3
-    add_allday(3, 1, "Anniversary", "birthdays")
+    add_allday(3, 1, "Anniversary", "birthdays",
+               description="12 years. Flowers delivered to home in the morning.")
     add(3, 7.5, 8, "Gym", "personal")
-    add(3, 13, 14, "Lunch w/ Sam", "personal", "Oro")
-    add(3, 18.5, 20.5, "Anniversary dinner", "personal", "Fiola")
+    add(3, 13, 14, "Lunch w/ Sam", "personal", "Oro",
+        description="Catch up — Sam is back from Lisbon.")
+    add(3, 18.5, 20.5, "Anniversary dinner", "personal", "Fiola",
+        description="Reservation under Wilson. Tasting menu, wine pairing.",
+        html_link="https://calendar.google.com/calendar/u/0/r/eventedit/FAKE_EV_ANNIV",
+        organizer="J")
 
     # Day 4
     add(4, 8.5, 9, "Standup", "work")

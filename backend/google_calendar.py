@@ -87,6 +87,26 @@ def _normalize_event(ev: dict, cal_name: str, cal_color: str) -> dict | None:
     start = ev.get("start", {})
     end = ev.get("end", {})
 
+    if "dateTime" not in start and "date" not in start:
+        return None  # skip events with no usable start
+    if "dateTime" not in end and "date" not in end:
+        return None
+
+    # Common fields for the event-detail popup. We render only what's present
+    # so empty strings / empty lists are harmless on the frontend.
+    organizer = ev.get("organizer") or {}
+    attendees = ev.get("attendees") or []
+    extras = {
+        "description": ev.get("description", "") or "",
+        "html_link": ev.get("htmlLink", "") or "",
+        "organizer": organizer.get("displayName") or organizer.get("email") or "",
+        "attendees": [
+            (a.get("displayName") or a.get("email") or "")
+            for a in attendees
+            if not a.get("self")  # skip the viewer themselves — less noise in the popup
+        ],
+    }
+
     if "dateTime" in start and "dateTime" in end:
         return {
             "id": ev.get("id"),
@@ -96,7 +116,8 @@ def _normalize_event(ev: dict, cal_name: str, cal_color: str) -> dict | None:
             "start": start["dateTime"],
             "end": end["dateTime"],
             "all_day": False,
-            "location": ev.get("location", ""),
+            "location": ev.get("location", "") or "",
+            **extras,
         }
     if "date" in start and "date" in end:
         return {
@@ -107,7 +128,8 @@ def _normalize_event(ev: dict, cal_name: str, cal_color: str) -> dict | None:
             "start": start["date"],
             "end": end["date"],
             "all_day": True,
-            "location": ev.get("location", ""),
+            "location": ev.get("location", "") or "",
+            **extras,
         }
     return None
 

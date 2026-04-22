@@ -11,6 +11,14 @@
     weekStart: null,
     theme: "day",
     perf: "hi",
+    // Remote-control navigation. `view` is the active calendar surface; for
+    // Phase 1 it's always "week". `focus.eventId` is the id of the event the
+    // user has highlighted via arrow keys — null means no selection.
+    view: "week",
+    focus: { eventId: null },
+    // Event-detail popup. When `open` is true, arrow-key navigation still
+    // moves focus and the popup simply repopulates to follow it (modeless).
+    detail: { open: false },
   };
 
   const MS = 60 * 1000;
@@ -239,6 +247,7 @@
           if (idx < 0 || idx > 6) continue;
           const node = tpl.content.firstElementChild.cloneNode(true);
           node.style.color = e.color;
+          node.dataset.eventId = e.id;
           node.querySelector(".alldaypill__title").textContent = e.title;
           node.querySelector(".alldaypill__title").style.color = "var(--ink)";
           dayContainers[idx].appendChild(node);
@@ -278,6 +287,7 @@
       const col = cols[idx];
       layout.forEach(({ ev, s, e, col: c, cols: total }) => {
         const node = tpl.content.firstElementChild.cloneNode(true);
+        node.dataset.eventId = ev.id;
         node.style.setProperty("--ev-color", ev.color);
         const totalMin = (HOUR_END - HOUR_START) * 60;
         const top = (((s.getHours() + s.getMinutes() / 60) - HOUR_START) / HOURS_COUNT) * 100;
@@ -389,7 +399,268 @@
     renderAllDay();
     renderEvents();
     positionNowLine();
+    applyFocus();  // re-apply after a re-render so selection survives refetch
   }
+
+  // ---------- Focus cursor (keyboard-driven selection) -------------------
+  // A single event in STATE.focus.eventId is "highlighted." Arrow keys move
+  // the highlight; Enter opens details (Phase 1B); Escape clears.
+  //
+  // Left / Right  — previous / next event in chronological order across the
+  //                 visible 7-day window (all-day events sort first on their
+  //                 day, treated as posMin = -1).
+  // Up / Down     — move to the adjacent day column; within that column, pick
+  //                 the event whose start-of-day minute is closest to the
+  //                 currently focused event's. No wraparound.
+
+  function visibleDayIndex(ev) {
+    // Returns 0..6 for the day column this event lives in, or -1 if it's
+    // off-window. For all-day events that span into the window from before,
+    // we return the first visible day they cover.
+    if (ev.all_day) {
+      const weekEnd = new Date(STATE.weekStart.getTime() + 7 * 86400000);
+      if (ev._end <= STATE.weekStart || ev._start >= weekEnd) return -1;
+      const first = ev._start < STATE.weekStart ? STATE.weekStart : ev._start;
+      return Math.floor((first - STATE.weekStart) / 86400000);
+    }
+    const evDayStart = new Date(
+      ev._start.getFullYear(), ev._start.getMonth(), ev._start.getDate()
+    );
+    const diff = Math.floor((evDayStart - STATE.weekStart) / 86400000);
+    return diff >= 0 && diff < 7 ? diff : -1;
+  }
+
+  function focusableEvents() {
+    // Events currently rendered on the grid, sorted for left/right navigation.
+    // Sort key: (dayIdx, allDay ? -1 : startMinuteOfDay).
+    const items = [];
+    STATE.events.forEach((ev) => {
+      const dayIdx = visibleDayIndex(ev);
+      if (dayIdx < 0) return;
+      const posMin = ev.all_day
+        ? -1
+        : ev._start.getHours() * 60 + ev._start.getMinutes();
+      items.push({ ev, dayIdx, posMin });
+    });
+    items.sort((a, b) => a.dayIdx - b.dayIdx || a.posMin - b.posMin);
+    return items;
+  }
+
+  function applyFocus() {
+    // Toggle the .focus class on matching DOM nodes. Called after every
+    // render so selection persists across refetches.
+    document
+      .querySelectorAll(".event.focus, .alldaypill.focus")
+      .forEach((el) => el.classList.remove("focus"));
+    if (!STATE.focus.eventId) return;
+    const sel = `[data-event-id="${CSS.escape(STATE.focus.eventId)}"]`;
+    document.querySelectorAll(sel).forEach((el) => el.classList.add("focus"));
+  }
+
+  function setFocus(eventId) {
+    STATE.focus.eventId = eventId || null;
+    applyFocus();
+    // If the popup is open, make it follow the new focus.
+    if (STATE.detail.open) {
+      if (eventId) populateDetail();
+      else closeDetail();
+    }
+  }
+
+  function moveFocus(direction) {
+    const items = focusableEvents();
+    if (items.length === 0) return;
+
+    const idx = items.findIndex((it) => it.ev.id === STATE.focus.eventId);
+
+    if (idx < 0) {
+      // Nothing selected — pick today's first event if any, else the first
+      // overall. Feels natural when a family member picks up the remote.
+      const todayItems = items.filter((it) => it.dayIdx === 0);
+      setFocus((todayItems[0] || items[0]).ev.id);
+      return;
+    }
+
+    const current = items[idx];
+
+    if (direction === "prev") {
+      if (idx > 0) setFocus(items[idx - 1].ev.id);
+      return;
+    }
+    if (direction === "next") {
+      if (idx < items.length - 1) setFocus(items[idx + 1].ev.id);
+      return;
+    }
+    if (direction === "up" || direction === "down") {
+      const targetDay = current.dayIdx + (direction === "up" ? -1 : 1);
+      if (targetDay < 0 || targetDay > 6) return;
+      const candidates = items.filter((it) => it.dayIdx === targetDay);
+      if (candidates.length === 0) return;
+      let best = candidates[0];
+      let bestDist = Math.abs(best.posMin - current.posMin);
+      for (let i = 1; i < candidates.length; i++) {
+        const d = Math.abs(candidates[i].posMin - current.posMin);
+        if (d < bestDist) { best = candidates[i]; bestDist = d; }
+      }
+      setFocus(best.ev.id);
+    }
+  }
+
+  function installKeyboard() {
+    document.addEventListener("keydown", (e) => {
+      // Don't hijack text input if we ever add any (future: filter box on logs).
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+        return;
+      }
+      switch (e.key) {
+        case "ArrowLeft":  e.preventDefault(); moveFocus("prev"); break;
+        case "ArrowRight": e.preventDefault(); moveFocus("next"); break;
+        case "ArrowUp":    e.preventDefault(); moveFocus("up");   break;
+        case "ArrowDown":  e.preventDefault(); moveFocus("down"); break;
+        case "Enter":
+          e.preventDefault();
+          if (STATE.detail.open) {
+            closeDetail();
+          } else {
+            // No focus yet → land on something reasonable, then open.
+            if (!STATE.focus.eventId) moveFocus("next");
+            if (STATE.focus.eventId) openDetail();
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          if (STATE.detail.open) closeDetail();
+          else setFocus(null);
+          break;
+      }
+    });
+  }
+
+  // ---------- Event detail popup -----------------------------------------
+  // Modeless popup that tracks the currently focused event. Enter toggles it;
+  // Escape closes; arrow keys continue to move focus and the popup follows.
+
+  function openDetail() {
+    if (!STATE.focus.eventId) return;
+    populateDetail();
+    const panel = $("event-detail");
+    panel.hidden = false;
+    STATE.detail.open = true;
+    // Give the browser one frame to compute the panel's rect before we
+    // position it — hidden → visible hasn't laid out yet.
+    requestAnimationFrame(positionDetail);
+  }
+
+  function closeDetail() {
+    const panel = $("event-detail");
+    panel.hidden = true;
+    STATE.detail.open = false;
+  }
+
+  function populateDetail() {
+    const ev = STATE.events.find((e) => e.id === STATE.focus.eventId);
+    if (!ev) { closeDetail(); return; }
+    const panel = $("event-detail");
+
+    panel.querySelector(".event-detail__stripe").style.background = ev.color;
+    $("event-detail-cal").textContent = ev.calendar || "";
+    $("event-detail-time").textContent = ev.all_day
+      ? fmtAllDayRange(ev)
+      : `${fmtDayHeading(ev._start)} · ${fmtTimeRange(ev._start, ev._end)}`;
+    $("event-detail-title").textContent = ev.title;
+
+    setOptionalRow("event-detail-location-row", "event-detail-location", ev.location);
+    setOptionalRow("event-detail-organizer-row", "event-detail-organizer", ev.organizer);
+    const attendees = (ev.attendees || []).filter(Boolean);
+    setOptionalRow(
+      "event-detail-attendees-row",
+      "event-detail-attendees",
+      attendees.length ? attendees.join(", ") : ""
+    );
+
+    const desc = $("event-detail-description");
+    if (ev.description) {
+      desc.hidden = false;
+      desc.textContent = ev.description;
+    } else {
+      desc.hidden = true;
+      desc.textContent = "";
+    }
+
+    setOptionalRow("event-detail-link-row", "event-detail-link", ev.html_link);
+
+    // Reposition whenever the contents change size.
+    if (STATE.detail.open) requestAnimationFrame(positionDetail);
+  }
+
+  function setOptionalRow(rowId, textId, value) {
+    const row = $(rowId);
+    const text = $(textId);
+    if (value && String(value).trim()) {
+      row.hidden = false;
+      text.textContent = value;
+    } else {
+      row.hidden = true;
+      text.textContent = "";
+    }
+  }
+
+  function fmtDayHeading(d) {
+    // e.g. "Sat, Apr 26"
+    return `${WEEKDAYS[d.getDay()]}, ${MONTHS_FULL[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
+  }
+
+  function fmtAllDayRange(ev) {
+    // All-day `end` is exclusive (Google convention). A single-day event has
+    // end = start + 1 day; show just the one date.
+    const s = ev._start;
+    const e = new Date(ev._end.getTime() - 86400000);  // inclusive end
+    if (sameDay(s, e)) return `${fmtDayHeading(s)} · all day`;
+    return `${fmtDayHeading(s)} – ${fmtDayHeading(e)} · all day`;
+  }
+
+  function positionDetail() {
+    const panel = $("event-detail");
+    if (panel.hidden) return;
+    // Anchor to the first .focus element (timed event OR all-day pill).
+    const anchor = document.querySelector(".event.focus, .alldaypill.focus");
+    const pr = panel.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 16;
+
+    if (!anchor) {
+      // Fallback: center
+      panel.style.left = `${Math.max(margin, (vw - pr.width) / 2)}px`;
+      panel.style.top = `${Math.max(margin, (vh - pr.height) / 2)}px`;
+      return;
+    }
+
+    const r = anchor.getBoundingClientRect();
+    const gap = 12;
+
+    // Preference: to the right of the anchor, vertically aligned to its top
+    // but clamped into the viewport. Fall back to the left, then below, then above.
+    let left, top;
+    if (r.right + gap + pr.width + margin <= vw) {
+      left = r.right + gap;
+      top = clamp(r.top, margin, vh - pr.height - margin);
+    } else if (r.left - gap - pr.width - margin >= 0) {
+      left = r.left - gap - pr.width;
+      top = clamp(r.top, margin, vh - pr.height - margin);
+    } else if (r.bottom + gap + pr.height + margin <= vh) {
+      left = clamp(r.left, margin, vw - pr.width - margin);
+      top = r.bottom + gap;
+    } else {
+      left = clamp(r.left, margin, vw - pr.width - margin);
+      top = clamp(r.top - gap - pr.height, margin, vh - pr.height - margin);
+    }
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+  }
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 
   // ---------- Perf probe -------------------------------------------------
   function perfProbe() {
@@ -436,6 +707,7 @@
     await Promise.all([fetchWeather(), fetchEvents()]);
     perfProbe();
     scheduleThreeAmReload();
+    installKeyboard();
 
     setInterval(fetchEvents, 5 * 60 * 1000);
     setInterval(fetchWeather, 30 * 60 * 1000);
