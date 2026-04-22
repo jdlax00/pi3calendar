@@ -85,21 +85,25 @@
   color-scheme: light;
 }
 
-/* Night — deep forest-olive base, sage-tinted glass surfaces, antique brass
-   accent. Designed to sit next to a walnut + sage + gold + black kitchen. */
+/* Night — "Candlelit Atelier".
+   Obsidian ground with verdigris undertone; warm lamp-glow from the lower
+   right; type in bone-parchment; hero numerals and now-line cast in 22k
+   gold leaf with a soft bloom so they appear self-luminous. Glass turns
+   refractive (cut-crystal) rather than frosted.  */
 [data-theme="night"] {
-  --bg: #12170f;
-  --surface: rgba(58, 75, 55, 0.40);
-  --surface-strong: rgba(58, 75, 55, 0.66);
-  --surface-event: rgba(58, 75, 55, 0.78);
-  --surface-today: rgba(200, 162, 75, 0.11);     /* brass wash on today's col */
-  --ink: #ecebe0;                                 /* warm cream */
-  --ink-strong: #faf7e9;
-  --ink-muted: #98a495;                           /* muted sage */
-  --hairline: rgba(236, 235, 224, 0.15);
-  --hairline-soft: rgba(236, 235, 224, 0.06);
-  --accent: #c8a24b;                              /* antique brass — now-line, accents */
-  --accent-soft: rgba(200, 162, 75, 0.32);
+  --bg: #0c1310;                                  /* obsidian w/ green undertone */
+  --surface: rgba(32, 52, 42, 0.36);              /* dim verdigris patina */
+  --surface-strong: rgba(32, 52, 42, 0.62);
+  --surface-event: rgba(18, 32, 26, 0.80);        /* deeper so cards sit forward */
+  --surface-today: transparent;                   /* replaced by gradient below */
+  --ink: #ece7d4;                                 /* warm bone / aged parchment */
+  --ink-strong: #f7f1dd;                          /* cleaner bone for titles */
+  --ink-muted: #8a9380;                           /* tarnished sage ink */
+  --hairline: rgba(236, 231, 212, 0.17);
+  --hairline-soft: rgba(236, 231, 212, 0.06);
+  --accent: #d4af37;                              /* 22k gold leaf */
+  --accent-soft: rgba(212, 175, 55, 0.32);
+  --accent-glow: rgba(244, 206, 110, 0.55);       /* brighter bloom for self-lit accents */
   --bg-day-opacity: 0;
   --bg-night-opacity: 1;
   color-scheme: dark;
@@ -153,14 +157,22 @@ button { font: inherit; color: inherit; }
 }
 .bg__layer--night {
   opacity: var(--bg-night-opacity);
-  /* Corners: sage forest (UL), warm walnut (UR), brass glow (LR), deep pine (LL),
-     fading into an olive-black base. The glass picks up all four tones. */
+  /* One lamp, not four. Warm anchor in the lower-right (oil lamp on desk);
+     smaller hot core closer in; cool verdigris pooling upper-left; a broad
+     mid-tone through center so the glass has something to refract; a base
+     that tilts almost imperceptibly warm at the bottom. The whole scene
+     reads as lit from one direction, not evenly illuminated. */
   background:
-    radial-gradient(60% 55% at 22% 20%, #2d4627 0%, rgba(45, 70, 39, 0) 60%),
-    radial-gradient(55% 50% at 82% 25%, #3d2e1f 0%, rgba(61, 46, 31, 0) 60%),
-    radial-gradient(70% 55% at 78% 82%, #5a4420 0%, rgba(90, 68, 32, 0) 60%),
-    radial-gradient(55% 50% at 15% 85%, #1c2a18 0%, rgba(28, 42, 24, 0) 55%),
-    radial-gradient(90% 80% at 50% 50%, #12170f 0%, #080a06 100%);
+    /* hot core — tight, just below the lamp's "position" */
+    radial-gradient(28% 24% at 84% 82%, #624311 0%, rgba(98, 67, 17, 0) 72%),
+    /* outer halo of the lamp glow */
+    radial-gradient(52% 48% at 76% 76%, #3c2a0d 0%, rgba(60, 42, 13, 0) 70%),
+    /* cool moonlight / room-shadow bloom in the upper left */
+    radial-gradient(55% 50% at 18% 22%, #152e24 0%, rgba(21, 46, 36, 0) 68%),
+    /* verdigris midtone wash through the center — the surface glass picks this up */
+    radial-gradient(78% 62% at 44% 52%, #102921 0%, rgba(16, 41, 33, 0) 72%),
+    /* ground: obsidian at top, tilting a touch warmer at the bottom */
+    linear-gradient(180deg, #09110d 0%, #0c1310 55%, #14100a 100%);
 }
 .bg__grain {
   position: absolute;
@@ -169,7 +181,16 @@ button { font: inherit; color: inherit; }
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
-[data-theme="night"] .bg__grain { opacity: 0.12; }
+/* Night grain reads as linen / old parchment rather than digital noise —
+   stronger opacity, soft-light blend so it integrates with the warm ground. */
+[data-theme="night"] .bg__grain {
+  opacity: 0.26;
+  mix-blend-mode: soft-light;
+}
+/* Contemplative drift at night: slower, smaller amplitude. */
+[data-theme="night"] .bg__layer--night {
+  animation-duration: 120s;
+}
 
 @keyframes bgdrift {
   0%   { transform: translate3d(-1.2%, -0.8%, 0) scale(1.03); }
@@ -581,6 +602,111 @@ button { font: inherit; color: inherit; }
   to { opacity: 1; transform: none; }
 }
 
+/* =========================================================================
+   Night atelier treatment layer
+   =========================================================================
+   All rules scoped to [data-theme="night"] only. This is where "stunning"
+   lives: cut-crystal glass, a shaft of warm light on today's column, a
+   self-luminous gold date numeral, and a now-line that reads as an actual
+   glowing filament instead of a colored bar. Day theme remains untouched.
+*/
+
+/* Refractive glass — higher blur, higher saturation, slight brightness dip.
+   On the Pi 3, these values still sit inside the two-tier GPU filter budget
+   (see --ignore-gpu-blocklist); the perf-lite probe will still halve them
+   if the initial render measures badly. */
+[data-theme="night"] .glass {
+  -webkit-backdrop-filter: blur(28px) saturate(170%) brightness(0.96);
+  backdrop-filter: blur(28px) saturate(170%) brightness(0.96);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    inset 0 1px 0 var(--hairline-soft),
+    inset 0 -1px 0 rgba(10, 14, 10, 0.35),
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.35);
+}
+[data-theme="night"] .glass--deep {
+  -webkit-backdrop-filter: blur(44px) saturate(185%) brightness(0.98);
+  backdrop-filter: blur(44px) saturate(185%) brightness(0.98);
+}
+
+/* Shaft-of-light today column — a directional gradient fading downward,
+   not a flat tint. Gets warmer near the day-header (top) and fades to
+   nearly nothing at the bottom of the grid, as if lamp-light is spilling
+   down from above. */
+[data-theme="night"] .col--today {
+  background: linear-gradient(
+    180deg,
+    rgba(212, 175, 55, 0.15) 0%,
+    rgba(212, 175, 55, 0.08) 35%,
+    rgba(212, 175, 55, 0.03) 75%,
+    rgba(212, 175, 55, 0.0)  100%
+  );
+}
+
+/* ------- Gold-leaf hero numeral (the moment) -------
+   The big date number shifts from ink to luminous gold at night, with a
+   soft two-layer halo (tight + wide) so it reads as genuinely self-lit
+   rather than just colored. Variable-font weight drops a touch so the
+   gold feels airy, like goldsmith leaf rather than dense metal. */
+[data-theme="night"] .header__day {
+  color: var(--accent);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 280;
+  text-shadow:
+    0 0 calc(var(--u) * 0.35) rgba(212, 175, 55, 0.30),
+    0 0 calc(var(--u) * 1.2)  rgba(212, 175, 55, 0.12);
+}
+
+/* ------- Luminous now-line -------
+   Bright core, warm outer bloom, and a faint third halo so it reads as a
+   filament in a dim room, not a colored rule. */
+[data-theme="night"] .week__now {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-glow) 50%, var(--accent) 100%);
+  box-shadow:
+    0 0 calc(var(--u) * 0.25) var(--accent-glow),
+    0 0 calc(var(--u) * 0.8)  var(--accent-soft),
+    0 0 calc(var(--u) * 2)    rgba(212, 175, 55, 0.12);
+}
+[data-theme="night"] .week__now::before {
+  box-shadow:
+    0 0 calc(var(--u) * 0.3) var(--accent-glow),
+    0 0 calc(var(--u) * 0.9) var(--accent-soft);
+}
+
+/* Today header numeral picks up a tighter halo — same material, smaller scale. */
+[data-theme="night"] .dayhead--today .dayhead__num {
+  text-shadow: 0 0 calc(var(--u) * 0.3) rgba(212, 175, 55, 0.35);
+}
+
+/* Weather temp in header gets the same warm lift (cream -> faint bone glow)
+   so the two hero numerals on the header row feel like a matched pair. */
+[data-theme="night"] .header__wtemp {
+  text-shadow: 0 0 calc(var(--u) * 0.5) rgba(236, 231, 212, 0.10);
+}
+
+/* Event stripes emit a hint of their calendar color into the card body —
+   reads as the stripe actually casting light, not just sitting painted on. */
+[data-theme="night"] .event__stripe {
+  box-shadow: 0 0 calc(var(--u) * 0.3) var(--ev-color, currentColor);
+  opacity: 0.92;
+}
+
+/* Editorial typography shift at night — wider tracking on uppercase labels
+   gives the whole interface a quieter, more "journal at a desk lamp" cadence. */
+[data-theme="night"] .header__weekday,
+[data-theme="night"] .dayhead__label,
+[data-theme="night"] .hour,
+[data-theme="night"] .header__loc,
+[data-theme="night"] .pill__label {
+  letter-spacing: 0.26em;
+}
+
+/* Forecast pill hi temp picks up a whisper of gold, so the eye catches the
+   high without the number shouting. */
+[data-theme="night"] .pill__hi {
+  color: var(--ink-strong);
+  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 520;
+}
+
 /* ---------- Perf degradation ------------------------------------------- */
 [data-perf="lite"] {
   --glass-blur: 12px;
@@ -590,6 +716,16 @@ button { font: inherit; color: inherit; }
 }
 [data-perf="lite"] .bg__layer { animation: none; transform: none; }
 [data-perf="lite"] .week__now { animation: none; }
+/* Drop the gold-leaf halos in lite mode — big text-shadows are the first
+   thing to jank when compositing is weak. Keep the gold color, lose the glow. */
+[data-perf="lite"][data-theme="night"] .header__day,
+[data-perf="lite"][data-theme="night"] .week__now,
+[data-perf="lite"][data-theme="night"] .week__now::before,
+[data-perf="lite"][data-theme="night"] .dayhead--today .dayhead__num,
+[data-perf="lite"][data-theme="night"] .event__stripe {
+  text-shadow: none;
+  box-shadow: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .bg__layer { animation: none; transform: none; }
