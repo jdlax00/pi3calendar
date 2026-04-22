@@ -49,7 +49,7 @@
   /* Time-gutter + grid sizing */
   --gutter: clamp(2.5rem, 3vw, 4rem);
   --row-h: minmax(2.1rem, 1fr);
-  --hours-count: 17;         /* 6 AM through 10 PM, inclusive start, exclusive end ≈ 22 */
+  --hours-count: 14;         /* 7 AM through 9 PM — must match HOUR_START/HOUR_END in app.js */
   --hour-start: 6;
 
   /* Glass defaults */
@@ -541,8 +541,24 @@ button { font: inherit; color: inherit; }
   font-feature-settings: "tnum";
   line-height: 1.2;
 }
+/* Short events (< 45 min) — drop the time, tighten vertical padding so the
+   title isn't cropped by the card's own chrome. */
+.event--short {
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.55);
+  gap: calc(var(--u) * 0.35);
+}
 .event--short .event__time { display: none; }
-.event--tiny .event__title { font-size: var(--t-small); }
+.event--short .event__title { line-height: 1.1; }
+
+/* Tiny events (< 25 min) — really minimal. */
+.event--tiny {
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.5);
+  gap: calc(var(--u) * 0.3);
+}
+.event--tiny .event__title {
+  font-size: var(--t-small);
+  line-height: 1.05;
+}
 
 /* ---------- Load-in animation ------------------------------------------ */
 .app > * {

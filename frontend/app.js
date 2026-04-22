@@ -14,9 +14,12 @@
   };
 
   const MS = 60 * 1000;
-  const HOUR_START = 6;
-  const HOUR_END = 23; // exclusive — grid covers [6, 23), i.e. 6 AM through 10:59 PM
-  const HOURS_COUNT = HOUR_END - HOUR_START; // 17
+  // Visible hour window on the grid. Exclusive end — [7, 21) = 7 AM through 8:59 PM.
+  // Narrower window means taller rows, so short events don't get clipped.
+  // To widen: try HOUR_START=6 / HOUR_END=22 for 6 AM – 9:59 PM.
+  const HOUR_START = 7;
+  const HOUR_END = 21;
+  const HOURS_COUNT = HOUR_END - HOUR_START; // 14
   const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WEEKDAYS_FULL = [
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
@@ -38,10 +41,11 @@
   };
 
   // ---------- Time helpers -----------------------------------------------
-  const startOfSunday = (d = new Date()) => {
+  // Start of the 7-day window shown on the grid. The window is rolling:
+  // today is always the first column, with the next 6 days following.
+  const startOfWindow = (d = new Date()) => {
     const day = new Date(d);
     day.setHours(0, 0, 0, 0);
-    day.setDate(day.getDate() - day.getDay()); // Sunday = 0
     return day;
   };
 
@@ -426,7 +430,7 @@
 
   // ---------- Bootstrap --------------------------------------------------
   async function init() {
-    STATE.weekStart = startOfSunday(new Date());
+    STATE.weekStart = startOfWindow(new Date());
     await fetchConfig();
     renderWeekStructure();
     await Promise.all([fetchWeather(), fetchEvents()]);
@@ -439,11 +443,11 @@
     setInterval(renderHeader, 60 * 1000);
     setInterval(evaluateTheme, 5 * 60 * 1000);
     setInterval(() => {
-      // If the day has rolled over, rebase the week and re-render.
-      const nowStart = startOfSunday(new Date());
+      // If the day has rolled over, slide the 7-day window forward and re-render.
+      const nowStart = startOfWindow(new Date());
       if (nowStart.getTime() !== STATE.weekStart.getTime()) {
         STATE.weekStart = nowStart;
-        renderAll();
+        fetchEvents();  // refetch so the new 7th day's events come in
       }
     }, 60 * 1000);
 

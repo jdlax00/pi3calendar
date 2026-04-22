@@ -69,11 +69,10 @@ def api_events():
     start = request.args.get("start")
     end = request.args.get("end")
     if not start or not end:
-        now = datetime.now(timezone.utc)
-        sunday = now - timedelta(days=(now.weekday() + 1) % 7)
-        sunday = sunday.replace(hour=0, minute=0, second=0, microsecond=0)
-        start = sunday.isoformat()
-        end = (sunday + timedelta(days=7)).isoformat()
+        # Fallback if the client didn't pass a window — today through +7 days.
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        start = today.isoformat()
+        end = (today + timedelta(days=7)).isoformat()
 
     cfg = load_config()
     if cfg.get("fixtures") or USE_FIXTURES:
