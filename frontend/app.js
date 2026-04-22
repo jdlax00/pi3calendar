@@ -14,12 +14,12 @@
   };
 
   const MS = 60 * 1000;
-  // Visible hour window on the grid. Exclusive end — [7, 21) = 7 AM through 8:59 PM.
-  // Narrower window means taller rows, so short events don't get clipped.
-  // To widen: try HOUR_START=6 / HOUR_END=22 for 6 AM – 9:59 PM.
+  // Visible hour window on the grid. Exclusive end — [7, 23) = 7 AM through 10:59 PM.
+  // 16 rows fills the grid comfortably at 1080p; short events use a compact
+  // card style (smaller font, tighter padding) so they still read cleanly.
   const HOUR_START = 7;
-  const HOUR_END = 21;
-  const HOURS_COUNT = HOUR_END - HOUR_START; // 14
+  const HOUR_END = 23;
+  const HOURS_COUNT = HOUR_END - HOUR_START; // 16
   const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WEEKDAYS_FULL = [
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",

@@ -49,7 +49,7 @@
   /* Time-gutter + grid sizing */
   --gutter: clamp(2.5rem, 3vw, 4rem);
   --row-h: minmax(2.1rem, 1fr);
-  --hours-count: 14;         /* 7 AM through 9 PM — must match HOUR_START/HOUR_END in app.js */
+  --hours-count: 16;         /* 7 AM through 10 PM — must match HOUR_START/HOUR_END in app.js */
   --hour-start: 6;
 
   /* Glass defaults */
@@ -85,19 +85,21 @@
   color-scheme: light;
 }
 
+/* Night — deep forest-olive base, sage-tinted glass surfaces, antique brass
+   accent. Designed to sit next to a walnut + sage + gold + black kitchen. */
 [data-theme="night"] {
-  --bg: #0a1221;
-  --surface: rgba(22, 34, 55, 0.38);
-  --surface-strong: rgba(22, 34, 55, 0.62);
-  --surface-event: rgba(22, 34, 55, 0.72);
-  --surface-today: rgba(233, 168, 124, 0.10);
-  --ink: #e8ecf4;
-  --ink-strong: #ffffff;
-  --ink-muted: #a3b1c8;
-  --hairline: rgba(232, 236, 244, 0.16);
-  --hairline-soft: rgba(232, 236, 244, 0.07);
-  --accent: #e9a87c;
-  --accent-soft: rgba(233, 168, 124, 0.32);
+  --bg: #12170f;
+  --surface: rgba(58, 75, 55, 0.40);
+  --surface-strong: rgba(58, 75, 55, 0.66);
+  --surface-event: rgba(58, 75, 55, 0.78);
+  --surface-today: rgba(200, 162, 75, 0.11);     /* brass wash on today's col */
+  --ink: #ecebe0;                                 /* warm cream */
+  --ink-strong: #faf7e9;
+  --ink-muted: #98a495;                           /* muted sage */
+  --hairline: rgba(236, 235, 224, 0.15);
+  --hairline-soft: rgba(236, 235, 224, 0.06);
+  --accent: #c8a24b;                              /* antique brass — now-line, accents */
+  --accent-soft: rgba(200, 162, 75, 0.32);
   --bg-day-opacity: 0;
   --bg-night-opacity: 1;
   color-scheme: dark;
@@ -151,12 +153,14 @@ button { font: inherit; color: inherit; }
 }
 .bg__layer--night {
   opacity: var(--bg-night-opacity);
+  /* Corners: sage forest (UL), warm walnut (UR), brass glow (LR), deep pine (LL),
+     fading into an olive-black base. The glass picks up all four tones. */
   background:
-    radial-gradient(60% 55% at 22% 20%, #2b3f6e 0%, rgba(43, 63, 110, 0) 60%),
-    radial-gradient(55% 50% at 82% 25%, #5a3a66 0%, rgba(90, 58, 102, 0) 60%),
-    radial-gradient(70% 55% at 78% 82%, #14395a 0%, rgba(20, 57, 90, 0) 60%),
-    radial-gradient(55% 50% at 15% 85%, #3a2f55 0%, rgba(58, 47, 85, 0) 55%),
-    radial-gradient(90% 80% at 50% 50%, #0a1221 0%, #070c18 100%);
+    radial-gradient(60% 55% at 22% 20%, #2d4627 0%, rgba(45, 70, 39, 0) 60%),
+    radial-gradient(55% 50% at 82% 25%, #3d2e1f 0%, rgba(61, 46, 31, 0) 60%),
+    radial-gradient(70% 55% at 78% 82%, #5a4420 0%, rgba(90, 68, 32, 0) 60%),
+    radial-gradient(55% 50% at 15% 85%, #1c2a18 0%, rgba(28, 42, 24, 0) 55%),
+    radial-gradient(90% 80% at 50% 50%, #12170f 0%, #080a06 100%);
 }
 .bg__grain {
   position: absolute;
@@ -492,8 +496,8 @@ button { font: inherit; color: inherit; }
   left: calc(var(--u) * 0.25);
   right: calc(var(--u) * 0.25);
   display: flex;
-  gap: calc(var(--u) * 0.45);
-  padding: calc(var(--u) * 0.45) calc(var(--u) * 0.6);
+  gap: calc(var(--u) * 0.4);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.5);
   border-radius: var(--r-md);
   overflow: hidden;
   contain: layout paint;
@@ -522,42 +526,45 @@ button { font: inherit; color: inherit; }
 }
 .event__title {
   font-weight: 600;
-  font-size: calc(var(--t-body) * 0.95);
+  font-size: calc(var(--t-small) * 1.05);
   color: var(--ink-strong);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   letter-spacing: -0.005em;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 .event__time {
   font-family: var(--font-body);
   font-variation-settings: "wght" 450;
-  font-size: var(--t-small);
+  font-size: calc(var(--t-small) * 0.88);
   color: var(--ink-muted);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   font-feature-settings: "tnum";
-  line-height: 1.2;
+  line-height: 1.15;
 }
-/* Short events (< 45 min) — drop the time, tighten vertical padding so the
-   title isn't cropped by the card's own chrome. */
+/* Short events (< 45 min) — drop the time, shrink the title a touch,
+   tighten vertical padding so the text isn't cropped by the card chrome. */
 .event--short {
-  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.55);
-  gap: calc(var(--u) * 0.35);
-}
-.event--short .event__time { display: none; }
-.event--short .event__title { line-height: 1.1; }
-
-/* Tiny events (< 25 min) — really minimal. */
-.event--tiny {
-  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.15) calc(var(--u) * 0.5);
   gap: calc(var(--u) * 0.3);
 }
-.event--tiny .event__title {
-  font-size: var(--t-small);
+.event--short .event__time { display: none; }
+.event--short .event__title {
+  font-size: calc(var(--t-small) * 0.98);
   line-height: 1.05;
+}
+
+/* Tiny events (< 25 min) — barely-there padding so even 15-min cards fit. */
+.event--tiny {
+  padding: calc(var(--u) * 0.08) calc(var(--u) * 0.45);
+  gap: calc(var(--u) * 0.25);
+}
+.event--tiny .event__title {
+  font-size: calc(var(--t-small) * 0.88);
+  line-height: 1.02;
 }
 
 /* ---------- Load-in animation ------------------------------------------ */
