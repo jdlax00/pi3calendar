@@ -19,6 +19,22 @@ USE_FIXTURES = os.environ.get("PICAL_FIXTURES", "") == "1"
 app = Flask(__name__, static_folder=None)
 
 
+def _no_store(response):
+    """Tell the browser never to cache the frontend bundle.
+
+    Flask's default SEND_FILE_MAX_AGE_DEFAULT is 12h, which means Chromium
+    keeps serving the old app.js/styles.css across normal reloads — the
+    dashboard only picks up new code on a hard refresh (Ctrl+Shift+R or our
+    CDP `ignoreCache: true` path). These files are tiny and served from
+    localhost, so no-store costs nothing and keeps the kiosk's 3 AM reload
+    (and any normal refresh) honest after a deploy.
+    """
+    response.headers["Cache-Control"] = "no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 def load_config() -> dict:
     if CONFIG_PATH.exists():
         return json.loads(CONFIG_PATH.read_text())
@@ -33,22 +49,25 @@ def load_config() -> dict:
 
 @app.get("/")
 def index():
-    return send_from_directory(FRONTEND, "index.html")
+    return _no_store(send_from_directory(FRONTEND, "index.html"))
 
 
 @app.get("/assets/<path:filename>")
 def assets(filename: str):
+    # Fonts and background images are versioned-by-filename and ~stable, so
+    # let the browser cache them normally. Only the HTML/JS/CSS bundle needs
+    # the no-store treatment.
     return send_from_directory(FRONTEND / "assets", filename)
 
 
 @app.get("/styles.css")
 def styles():
-    return send_from_directory(FRONTEND, "styles.css")
+    return _no_store(send_from_directory(FRONTEND, "styles.css"))
 
 
 @app.get("/app.js")
 def appjs():
-    return send_from_directory(FRONTEND, "app.js")
+    return _no_store(send_from_directory(FRONTEND, "app.js"))
 
 
 @app.get("/api/config")
