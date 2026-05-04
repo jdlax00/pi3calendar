@@ -131,4 +131,8 @@ def api_weather():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
-    app.run(host="127.0.0.1", port=port, debug=False)
+    # Bind to all interfaces so /logs is reachable from any device on the
+    # home LAN (the diagnostic surface is useless if you have to SSH in to
+    # see it). Same trust posture as the rest of the kiosk — never port-
+    # forward to the public internet.
+    app.run(host="0.0.0.0", port=port, debug=False)

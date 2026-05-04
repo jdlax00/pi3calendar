@@ -13,6 +13,16 @@
     perf: "hi",
   };
 
+  // Surface unhandled promise rejections to the console so they show up in
+  // /logs (via Chromium's stderr → systemd journal once we wire the kiosk
+  // launch with --enable-logging=stderr; until then, visible in DevTools).
+  // Without this, an `await` we forgot to wrap silently swallows the error
+  // and the page can wedge mid-init — exactly the failure mode that put
+  // the kiosk on the floor for 8 hours on May 4.
+  window.addEventListener("unhandledrejection", (e) => {
+    console.error("unhandled rejection:", e.reason);
+  });
+
   const MS = 60 * 1000;
   // Visible hour window on the grid. Exclusive end — [7, 23) = 7 AM through 10:59 PM.
   // 16 rows fills the grid comfortably at 1080p; short events use a compact
@@ -80,24 +90,46 @@
   }
 
   async function fetchEvents() {
-    const start = STATE.weekStart.toISOString();
-    const end = new Date(STATE.weekStart.getTime() + 7 * 86400 * 1000).toISOString();
-    const r = await fetch(`/api/events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
-    const json = await r.json();
-    STATE.events = (json.events || []).map((e) => ({
-      ...e,
-      _start: parseISO(e.start),
-      _end: parseISO(e.end),
-    }));
-    renderAll();
+    // Wrap the whole body so a transient backend 5xx (Google API blip,
+    // OAuth refresh hiccup, anything) becomes a logged warning rather
+    // than an exception that bubbles out and breaks an init() await.
+    // STATE.events is only mutated on success — a partial parse never
+    // leaves a half-merged events list that could break later renders.
+    try {
+      const start = STATE.weekStart.toISOString();
+      const end = new Date(STATE.weekStart.getTime() + 7 * 86400 * 1000).toISOString();
+      const r = await fetch(`/api/events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      if (!r.ok) throw new Error(`events ${r.status}`);
+      const json = await r.json();
+      STATE.events = (json.events || []).map((e) => ({
+        ...e,
+        _start: parseISO(e.start),
+        _end: parseISO(e.end),
+      }));
+      renderAll();
+    } catch (e) {
+      console.warn("fetchEvents failed", e);
+    }
   }
 
   async function fetchWeather() {
-    const r = await fetch("/api/weather");
-    STATE.weather = await r.json();
-    renderHeader();
-    renderForecast();
-    evaluateTheme();
+    // Same shape as fetchEvents — and same load-bearing reason: this is
+    // exactly the function that took the kiosk down on May 4 when Open-
+    // Meteo timed out and /api/weather returned 500. The setInterval for
+    // this function fires every 30 min independently of init(), so a
+    // single failure now retries on the next tick instead of poisoning
+    // the entire boot.
+    try {
+      const r = await fetch("/api/weather");
+      if (!r.ok) throw new Error(`weather ${r.status}`);
+      const json = await r.json();
+      STATE.weather = json;
+      renderHeader();
+      renderForecast();
+      evaluateTheme();
+    } catch (e) {
+      console.warn("fetchWeather failed", e);
+    }
   }
 
   // ---------- Theme -------------------------------------------------------
@@ -428,14 +460,59 @@
     setTimeout(() => window.location.reload(), delay);
   }
 
+  // Belt-and-suspenders recovery for any freeze cause that still leaves
+  // the JS event loop alive — runaway GC on Pi 3, leaked DOM nodes, a
+  // future bug we haven't found yet. Two independent setIntervals: one
+  // writes a heartbeat every 30s, the other checks staleness on the same
+  // cadence and reloads the page if the heartbeat is older than 5 min.
+  // Independent so a tick that throws inside the writer can't take down
+  // the checker (or vice-versa).
+  //
+  // 30s cadence is cheap (two no-op-ish callbacks per minute on top of
+  // the existing renderHeader / positionNowLine 60s ticks). 5 min stale-
+  // ness is generous enough to ride through a slow Open-Meteo round-trip
+  // or a long compositor frame without false positives.
+  //
+  // Limitation: if Chromium's renderer process itself wedges (the page
+  // is dead at the OS level, not just JS-frozen), neither tick fires
+  // and the watchdog can't help. Backend-side reaper is out of scope
+  // here; deferred until we observe a renderer-level wedge in production.
+  function installWatchdog() {
+    let lastHeartbeat = Date.now();
+    const TICK_MS  = 30 * 1000;
+    const STALE_MS = 5 * 60 * 1000;
+
+    setInterval(() => { lastHeartbeat = Date.now(); }, TICK_MS);
+    setInterval(() => {
+      const age = Date.now() - lastHeartbeat;
+      if (age > STALE_MS) {
+        console.error(`watchdog: heartbeat stale by ${age}ms, reloading`);
+        window.location.reload();
+      }
+    }, TICK_MS);
+  }
+
   // ---------- Bootstrap --------------------------------------------------
   async function init() {
     STATE.weekStart = startOfWindow(new Date());
-    await fetchConfig();
+    // fetchConfig is wrapped in its own try — config is small and rarely
+    // changes, so a failure here is unusual; we still don't want it to
+    // poison the timer-installation block below. If it fails the page
+    // boots without a location label and the rest of the loops keep
+    // running. The next 5-min fetchEvents tick will succeed once the
+    // backend recovers.
+    try { await fetchConfig(); } catch (e) { console.warn("fetchConfig failed", e); }
     renderWeekStructure();
-    await Promise.all([fetchWeather(), fetchEvents()]);
+    // CRITICAL: Promise.allSettled, not Promise.all. A single failed
+    // initial fetch (the May 4 freeze was triggered here when Open-Meteo
+    // timed out and /api/weather returned 500) used to reject the whole
+    // promise and crash init() before any of the recurring timers below
+    // were installed — leaving the page frozen until manual reload.
+    // allSettled waits for both regardless of outcome and never throws.
+    await Promise.allSettled([fetchWeather(), fetchEvents()]);
     perfProbe();
     scheduleThreeAmReload();
+    installWatchdog();
 
     setInterval(fetchEvents, 5 * 60 * 1000);
     setInterval(fetchWeather, 30 * 60 * 1000);
