@@ -7,8 +7,11 @@ def _today_anchor(now: datetime) -> datetime:
     return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
-def fixture_events(start_iso: str | None = None) -> list[dict]:
-    """Hand-crafted week of events spanning the 5 Google Calendars our family uses.
+def fixture_events(start_iso: str | None = None, end_iso: str | None = None) -> list[dict]:
+    """Hand-crafted 8 days (today + 7) spanning the 5 Google Calendars our family uses.
+
+    The window args are accepted for signature parity with the Google
+    fetcher; the fixture always covers the agenda's today-first 8 days.
 
     Timestamps are emitted in the host's local timezone so the fixture feels
     natural in the browser regardless of where the host sits. Day 0 = today.
@@ -76,6 +79,14 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
     add(2, 11, 12, "Quarterly review prep", "work")
     add(2, 15.5, 17, "Emma + Jack pickup", "kids")
     add(2, 19, 20.5, "Book club", "personal")
+    # Crowded on purpose — exercises the agenda's "+N more" truncation.
+    add(2, 7, 7.5, "Walk with Linda", "personal")
+    add(2, 8, 8.5, "Pharmacy pickup", "personal")
+    add(2, 12, 13, "Lunch w/ Carol", "family")
+    add(2, 13.5, 14, "Call the plumber", "personal")
+    add(2, 14, 15, "Hair appointment", "personal")
+    add(2, 17, 18, "Grandkids' recital", "kids")
+    add(2, 18, 19, "Choir practice", "personal")
 
     # Day 3
     add_allday(3, 1, "Anniversary", "birthdays")
@@ -98,11 +109,15 @@ def fixture_events(start_iso: str | None = None) -> list[dict]:
     add(6, 9, 10.5, "Morning run", "personal")
     add(6, 17, 19, "Beach dinner", "family")
 
+    # Day 7 — last agenda day
+    add(7, 9, 10.5, "Church", "family")
+    add(7, 12, 13.5, "Sunday brunch", "family")
+
     return sorted(events, key=lambda e: e["start"])
 
 
 def fixture_weather() -> dict:
-    """Plausible early-spring 7-day forecast, starting today."""
+    """Plausible early-spring 8-day forecast (today + 7), starting today."""
     week_start = _today_anchor(datetime.now().astimezone())
     # WMO codes: 0 clear, 1 mainly clear, 2 partly cloudy, 3 overcast,
     # 45/48 fog, 51/53/55 drizzle, 61/63/65 rain, 71/73/75 snow, 95 thunder
@@ -115,6 +130,7 @@ def fixture_weather() -> dict:
         (63, 49, 61),
         (58, 46, 63),
         (62, 48, 2),
+        (65, 47, 1),
     ]
     for i, (hi, lo, code) in enumerate(samples):
         day = (week_start + timedelta(days=i))

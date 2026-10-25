@@ -96,8 +96,10 @@
     // STATE.events is only mutated on success — a partial parse never
     // leaves a half-merged events list that could break later renders.
     try {
+      // mom-vertical: today + agenda_days, not the landscape grid's fixed 7.
+      const days = ((STATE.config && STATE.config.agenda_days) || 7) + 1;
       const start = STATE.weekStart.toISOString();
-      const end = new Date(STATE.weekStart.getTime() + 7 * 86400 * 1000).toISOString();
+      const end = new Date(STATE.weekStart.getTime() + days * 86400 * 1000).toISOString();
       const r = await fetch(`/api/events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
       if (!r.ok) throw new Error(`events ${r.status}`);
       const json = await r.json();
@@ -125,7 +127,7 @@
       const json = await r.json();
       STATE.weather = json;
       renderHeader();
-      renderForecast();
+      renderAll();  // mom-vertical: per-day weather lives in the agenda cards
       evaluateTheme();
     } catch (e) {
       console.warn("fetchWeather failed", e);
@@ -417,6 +419,12 @@
 
   // ---------- Render all -------------------------------------------------
   function renderAll() {
+    // mom-vertical: the portrait agenda replaces the landscape week grid.
+    // The grid renderers below stay in the file so `git merge main` is clean.
+    if (window.PiPortrait) {
+      window.PiPortrait.render(STATE, { WMO_TO_ICON, iconSvg, $ });
+      return;
+    }
     renderWeekStructure();
     renderAllDay();
     renderEvents();
@@ -502,7 +510,7 @@
     // running. The next 5-min fetchEvents tick will succeed once the
     // backend recovers.
     try { await fetchConfig(); } catch (e) { console.warn("fetchConfig failed", e); }
-    renderWeekStructure();
+    renderAll();
     // CRITICAL: Promise.allSettled, not Promise.all. A single failed
     // initial fetch (the May 4 freeze was triggered here when Open-Meteo
     // timed out and /api/weather returned 500) used to reject the whole
@@ -516,7 +524,7 @@
 
     setInterval(fetchEvents, 5 * 60 * 1000);
     setInterval(fetchWeather, 30 * 60 * 1000);
-    setInterval(positionNowLine, 60 * 1000);
+    setInterval(renderAll, 60 * 1000);  // mom-vertical: re-dims past events
     setInterval(renderHeader, 60 * 1000);
     setInterval(evaluateTheme, 5 * 60 * 1000);
     setInterval(() => {
@@ -529,7 +537,7 @@
     }, 60 * 1000);
 
     window.addEventListener("resize", () => {
-      requestAnimationFrame(positionNowLine);
+      requestAnimationFrame(renderAll);  // mom-vertical: re-fit truncated lists
     });
   }
 

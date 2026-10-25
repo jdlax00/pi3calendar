@@ -1,0 +1,204 @@
+/* ==========================================================================
+   piCalendar — portrait agenda (mom-vertical branch only)
+   ==========================================================================
+   Loaded after styles.css. The landscape tokens scale on vw, which shrinks
+   everything on a TV turned sideways (1080 or 768 wide). Here the scale is
+   keyed to vh instead: both target panels are 9:16, so 1vh gives the same
+   proportions at 1080×1920 and 768×1366.
+*/
+
+[data-layout="agenda"] {
+  --u: 1.05vh;
+
+  --t-hero: 5.4vh;
+  --t-display: 3vh;
+  --t-label: 1.3vh;
+  --t-body: 1.7vh;
+  --t-small: 1.4vh;
+
+  /* Agenda type */
+  --t-dayname: 2vh;
+  --t-event: 1.45vh;   /* ~28px at 1920 tall ≈ 1 cm on a 31.5" panel */
+  --t-evtime: 1.25vh;
+  --t-today-event: 1.65vh;
+}
+
+/* ---------- Shell ------------------------------------------------------- */
+[data-layout="agenda"] .app {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: calc(var(--u) * 1.2);
+  gap: calc(var(--u) * 0.8);
+}
+
+[data-layout="agenda"] .header {
+  align-items: center;
+  row-gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+}
+[data-layout="agenda"] .header__date { flex-wrap: wrap; row-gap: 0; }
+
+/* ---------- Day stack --------------------------------------------------- */
+.portrait {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.7);
+  min-height: 0;
+}
+
+/* One glass layer per card; rows inside are flat. Keeps backdrop-filter
+   surfaces to ~9 on screen, which matters on a Pi 3 that is also paying
+   for the compositor's 90° rotation pass.
+   flex-basis auto = each card starts at its content height. When the week
+   overflows, flex-shrink takes space proportionally to that basis, so busy
+   days give up the most and quiet days keep their one or two rows; spare
+   height on a light week is shared out by flex-grow. */
+.agday {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.3);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  border-radius: var(--r-md);
+}
+.agday--today {
+  background-color: var(--surface-strong);
+  box-shadow:
+    inset 0 0 0 2px var(--accent-soft),
+    inset 0 1px 0 var(--hairline-soft),
+    0 calc(var(--u) * 0.4) calc(var(--u) * 1.2) rgba(0, 0, 0, 0.06);
+}
+
+.agday__head {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 0.9);
+  flex: 0 0 auto;
+}
+.agday__name {
+  font-family: var(--font-display);
+  font-size: var(--t-dayname);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 420;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  color: var(--ink-strong);
+}
+.agday--today .agday__name {
+  color: var(--accent);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 540;
+}
+.agday__date {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: var(--t-label);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+.agday__wx {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  align-self: center;
+}
+.agday__wicon { color: var(--ink); }
+.agday__wicon svg {
+  width: calc(var(--t-dayname) * 0.95);
+  height: calc(var(--t-dayname) * 0.95);
+}
+.agday__hi {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 480;
+  font-size: var(--t-event);
+  color: var(--ink);
+}
+.agday__lo {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 320;
+  font-size: var(--t-evtime);
+  color: var(--ink-muted);
+}
+
+/* allocateHeights() briefly applies this to read each card's natural height. */
+.portrait--measuring .agday { flex: 0 0 auto; }
+.portrait--measuring .agday__list { overflow: visible; flex: 0 0 auto; }
+
+/* ---------- Event rows -------------------------------------------------- */
+.agday__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;           /* fitList() trims rows that spill past this */
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.15);
+}
+.agev {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  flex: 0 0 auto;
+  min-width: 0;
+  font-size: var(--t-event);
+  line-height: 1.2;
+  color: var(--ink-strong);
+}
+.agday--today .agev { font-size: var(--t-today-event); }
+
+.agev__stripe {
+  flex: 0 0 auto;
+  width: max(4px, 0.45vh);
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--ev-color, currentColor);
+}
+.agev__time {
+  flex: 0 0 auto;
+  min-width: 6.2em;
+  font-size: var(--t-evtime);
+  font-variation-settings: "wght" 450;
+  font-feature-settings: "tnum";
+  color: var(--ink-muted);
+}
+.agday--today .agev__time { font-size: var(--t-event); }
+.agev__title {
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agev--past { opacity: 0.45; }
+.agev--empty,
+.agev--more {
+  font-size: var(--t-evtime);
+  color: var(--ink-muted);
+  font-style: italic;
+}
+.agev--more { padding-left: calc(max(4px, 0.45vh) + var(--u) * 0.8); }
+
+/* ---------- Night ------------------------------------------------------- */
+[data-theme="night"] .agday--today {
+  background-image: linear-gradient(
+    180deg,
+    rgba(212, 175, 55, 0.12) 0%,
+    rgba(212, 175, 55, 0.0) 100%
+  );
+}
+[data-theme="night"] .agday--today .agday__name {
+  text-shadow: 0 0 calc(var(--u) * 0.4) rgba(212, 175, 55, 0.35);
+}
+[data-theme="night"] .agev__stripe {
+  box-shadow: 0 0 calc(var(--u) * 0.3) var(--ev-color, currentColor);
+}
+[data-theme="night"] .agday__date { letter-spacing: 0.24em; }
+
+[data-perf="lite"][data-theme="night"] .agday--today .agday__name,
+[data-perf="lite"][data-theme="night"] .agev__stripe {
+  text-shadow: none;
+  box-shadow: none;
+}

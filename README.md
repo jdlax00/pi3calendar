@@ -1,3 +1,8 @@
+> **`mom-vertical` branch — portrait fork for Mom's TV. Do not merge into `main`.**
+> Shows an agenda (today + the next 7 days) on a TV mounted vertically.
+> Setup for her Pi, TV, and Google Calendar: [MOM_SETUP.md](MOM_SETUP.md).
+> Pick up fixes from `main` with `git merge main`.
+
 # piCalendar
 
 An always-on glass family-calendar display for a Raspberry Pi 3 driving a TV.
@@ -84,6 +89,9 @@ That's it — the calendar comes up on the TV.
 | `location_label` | Shown in the header (e.g. `"Washington, DC"`) |
 | `fixtures` | `true` to run with demo data (no Google auth needed) |
 | `theme_override` | `"day"` or `"night"` to pin; `null` for auto |
+| `agenda_days` | Days shown after today in the portrait agenda (default `7`) |
+| `hidden_titles` | Title substrings to hide, case-insensitive (default `[]`) |
+| `calendar_ids` | Only show these calendars; `[]` shows every calendar (default) |
 
 ## Local development (no Pi, no Google auth)
 

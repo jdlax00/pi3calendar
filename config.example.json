@@ -4,5 +4,8 @@
   "timezone": "America/New_York",
   "location_label": "Washington, DC",
   "fixtures": false,
-  "theme_override": null
+  "theme_override": null,
+  "agenda_days": 7,
+  "hidden_titles": [],
+  "calendar_ids": []
 }

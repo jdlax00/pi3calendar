@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="day" data-perf="hi">
+<html lang="en" data-theme="day" data-perf="hi" data-layout="agenda">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,30..100;1,9..144,300..700,30..100&family=Geist:wght@300..600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/portrait.css" />
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -36,24 +37,8 @@
       </div>
     </header>
 
-    <!-- 7-day weather pills -->
-    <section class="forecast" id="forecast" aria-label="Weekly forecast"></section>
-
-    <!-- Week grid -->
-    <section class="week" id="week" aria-label="Week of events">
-      <!-- Day headers -->
-      <div class="week__dayheaders" id="dayheaders"></div>
-
-      <!-- All-day strip -->
-      <div class="week__allday" id="allday"></div>
-
-      <!-- Time grid + columns -->
-      <div class="week__grid" id="weekgrid">
-        <div class="week__hours" id="hours"></div>
-        <div class="week__cols" id="cols"></div>
-        <div class="week__now" id="nowline" hidden></div>
-      </div>
-    </section>
+    <!-- mom-vertical: portrait agenda — today + next 7 days (frontend/portrait.js) -->
+    <section class="portrait" id="portrait" aria-label="Upcoming days" hidden></section>
   </main>
 
   <template id="tpl-forecast-pill">
@@ -122,6 +107,7 @@
     </defs>
   </svg>
 
+  <script src="/portrait.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

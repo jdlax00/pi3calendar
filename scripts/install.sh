@@ -10,6 +10,11 @@ REPO_DIR="${REPO_DIR:-/home/pi/picalendar}"
 USER_NAME="${USER_NAME:-pi}"
 CONFIG_DIR="/home/${USER_NAME}/.config/picalendar"
 AUTOSTART="/home/${USER_NAME}/.config/lxsession/LXDE-pi/autostart"
+LABWC_AUTOSTART="/home/${USER_NAME}/.config/labwc/autostart"
+# mom-vertical: output rotation for a TV mounted portrait. 90 or 270 —
+# whichever makes the picture upright (see MOM_SETUP.md, "Set up the TV").
+ROTATION="${ROTATION:-90}"
+HDMI_OUTPUT="${HDMI_OUTPUT:-HDMI-A-1}"
 
 echo "piCalendar install → ${REPO_DIR}"
 
@@ -32,7 +37,7 @@ fi
 
 sudo apt-get install -y \
   python3 python3-venv python3-pip \
-  "${CHROMIUM_PKG}" unclutter xdotool x11-xserver-utils
+  "${CHROMIUM_PKG}" unclutter xdotool x11-xserver-utils wlr-randr
 
 # 2. Python virtualenv
 echo "==> venv + pip deps"
@@ -58,6 +63,37 @@ sudo systemctl enable picalendar.service
 
 # 5. Chromium kiosk autostart
 echo "==> kiosk autostart"
+
+# Current Raspberry Pi OS runs the labwc Wayland compositor on the Pi 3, and
+# scripts/kiosk.sh drives ~/.config/labwc/autostart. labwc's autostart is a
+# plain shell script (kiosk.sh runs it with bash), not LXDE's @-prefixed list.
+if command -v labwc >/dev/null 2>&1; then
+  mkdir -p "$(dirname "${LABWC_AUTOSTART}")"
+  if [[ -f "${LABWC_AUTOSTART}" ]] && grep -q "picalendar kiosk" "${LABWC_AUTOSTART}"; then
+    echo "    labwc autostart already has the kiosk — leaving it alone"
+  else
+    cat >> "${LABWC_AUTOSTART}" <<LABWC
+
+# picalendar kiosk (mom-vertical: portrait)
+wlr-randr --output ${HDMI_OUTPUT} --transform ${ROTATION}
+${CHROMIUM_PKG} \\
+  --kiosk \\
+  --noerrdialogs \\
+  --disable-infobars \\
+  --disable-translate \\
+  --disable-pinch \\
+  --overscroll-history-navigation=0 \\
+  --check-for-update-interval=604800 \\
+  --enable-gpu-rasterization \\
+  --ignore-gpu-blocklist \\
+  --enable-zero-copy \\
+  --remote-debugging-port=9222 \\
+  http://localhost:5000 &
+LABWC
+    echo "    wrote ${LABWC_AUTOSTART} (rotation ${ROTATION} on ${HDMI_OUTPUT})"
+  fi
+fi
+
 mkdir -p "$(dirname "${AUTOSTART}")"
 touch "${AUTOSTART}"
 if ! grep -q "picalendar kiosk" "${AUTOSTART}"; then
@@ -66,6 +102,9 @@ if ! grep -q "picalendar kiosk" "${AUTOSTART}"; then
   # Rewrite the @chromium line to whichever binary is actually installed.
   sed "s|^@chromium |@${CHROMIUM_PKG} |" \
     "${REPO_DIR}/scripts/kiosk-autostart" >> "${AUTOSTART}"
+  # X11 fallback for the same portrait mount (90 → left, 270 → right).
+  XR_ROT="left"; [[ "${ROTATION}" == "270" ]] && XR_ROT="right"
+  echo "@xrandr --output HDMI-1 --rotate ${XR_ROT}" >> "${AUTOSTART}"
 fi
 
 echo

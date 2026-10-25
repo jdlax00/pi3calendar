@@ -16,9 +16,8 @@ CONFIG_PATH = Path(os.environ.get("PICAL_CONFIG", ROOT / "config.json"))
 USE_FIXTURES = os.environ.get("PICAL_FIXTURES", "") == "1"
 
 # Events whose title contains any of these substrings (case-insensitive) are
-# filtered out before being sent to the client. Useful for hiding noisy
-# recurring meetings the family doesn't want on the living-room display.
-HIDDEN_TITLE_SUBSTRINGS = ("wildebeast",)
+# filtered out before being sent to the client. Configured per-household via
+# `hidden_titles` in config.json so this fork doesn't inherit main's list.
 
 
 app = Flask(__name__, static_folder=None)
@@ -75,6 +74,16 @@ def appjs():
     return _no_store(send_from_directory(FRONTEND, "app.js"))
 
 
+@app.get("/portrait.css")
+def portrait_css():
+    return _no_store(send_from_directory(FRONTEND, "portrait.css"))
+
+
+@app.get("/portrait.js")
+def portrait_js():
+    return _no_store(send_from_directory(FRONTEND, "portrait.js"))
+
+
 @app.get("/api/config")
 def api_config():
     cfg = load_config()
@@ -85,14 +94,16 @@ def api_config():
         "location_label": cfg.get("location_label", ""),
         "fixtures": bool(cfg.get("fixtures") or USE_FIXTURES),
         "theme_override": cfg.get("theme_override"),  # "day" | "night" | null
+        "agenda_days": int(cfg.get("agenda_days", 7)),  # days after today
     })
 
 
-def _filter_hidden(events: list[dict]) -> list[dict]:
-    """Strip out events whose title matches any HIDDEN_TITLE_SUBSTRINGS."""
-    if not HIDDEN_TITLE_SUBSTRINGS:
+def _filter_hidden(events: list[dict], cfg: dict) -> list[dict]:
+    """Strip out events whose title matches any of config's `hidden_titles`."""
+    hidden = cfg.get("hidden_titles") or []
+    if not hidden:
         return events
-    needles = tuple(s.lower() for s in HIDDEN_TITLE_SUBSTRINGS)
+    needles = tuple(s.lower() for s in hidden)
     return [
         e for e in events
         if not any(n in (e.get("title") or "").lower() for n in needles)
@@ -104,17 +115,19 @@ def api_events():
     start = request.args.get("start")
     end = request.args.get("end")
     if not start or not end:
-        # Fallback if the client didn't pass a window — today through +7 days.
+        # Fallback if the client didn't pass a window — today through +8 days.
         today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         start = today.isoformat()
-        end = (today + timedelta(days=7)).isoformat()
+        end = (today + timedelta(days=8)).isoformat()
 
     cfg = load_config()
     if cfg.get("fixtures") or USE_FIXTURES:
-        return jsonify({"events": _filter_hidden(fixtures.fixture_events(start))})
+        return jsonify({"events": _filter_hidden(fixtures.fixture_events(start, end), cfg)})
 
     from . import google_calendar
-    return jsonify({"events": _filter_hidden(google_calendar.list_all_events(start, end))})
+    calendar_ids = tuple(cfg.get("calendar_ids") or ())
+    events = google_calendar.list_all_events(start, end, calendar_ids)
+    return jsonify({"events": _filter_hidden(events, cfg)})
 
 
 @app.get("/api/weather")

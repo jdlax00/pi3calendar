@@ -4,5 +4,8 @@
   "timezone": "America/Denver",
   "location_label": "Clearfield, UT",
   "fixtures": false,
-  "theme_override": null
+  "theme_override": null,
+  "agenda_days": 7,
+  "hidden_titles": [],
+  "calendar_ids": []
 }

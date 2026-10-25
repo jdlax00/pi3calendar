@@ -42,7 +42,10 @@ def _service():
 
 
 @ttl_cache(ttl_seconds=5 * 60)
-def list_all_events(start_iso: str, end_iso: str) -> list[dict]:
+def list_all_events(start_iso: str, end_iso: str, calendar_ids: tuple[str, ...] = ()) -> list[dict]:
+    """Merged events across the account's calendars. A non-empty
+    `calendar_ids` limits the fetch to those calendars (config.json
+    `calendar_ids`); a tuple so the ttl_cache key stays hashable."""
     svc = _service()
 
     calendars: list[dict] = []
@@ -53,6 +56,9 @@ def list_all_events(start_iso: str, end_iso: str) -> list[dict]:
         page_token = resp.get("nextPageToken")
         if not page_token:
             break
+
+    if calendar_ids:
+        calendars = [c for c in calendars if c["id"] in calendar_ids]
 
     events: list[dict] = []
     for cal in calendars:
