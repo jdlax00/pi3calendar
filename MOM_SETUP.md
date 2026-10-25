@@ -7,6 +7,17 @@ an agenda: a big Today card plus the next 7 days, each with its weather.
 Do it in this order: boot the Pi at your place → dry run with demo data →
 connect her calendar → mount and rotate the TV at her house.
 
+## Progress
+
+- [x] Flash the SD card (Imager: hostname `momcal`, her Wi-Fi, SSH with
+      your Mac's public key, Raspberry Pi Connect on)
+- [ ] First boot + update — **you are here**
+- [ ] Install the app from this branch
+- [ ] Set her location in `config.json`
+- [ ] Dry run with demo data
+- [ ] Connect her Google Calendar
+- [ ] Mount and rotate the TV at her house
+
 ---
 
 ## 1. Boot the Pi
@@ -15,19 +26,33 @@ What you need: Pi 3B+, the official **5.1V 2.5A** micro-USB power supply
 (underpowered supplies cause throttling and Chromium crashes), a 16–32 GB
 microSD card, HDMI cable, USB keyboard + mouse for setup.
 
-1. **Flash the card** with Raspberry Pi Imager:
+1. ✅ **Flash the card** with Raspberry Pi Imager (done):
    - Device: **Raspberry Pi 3**
    - OS: **Raspberry Pi OS (64-bit)** — the desktop version, not Lite
    - Edit settings:
-     - Hostname `momcal`, username `pi`, a password you'll remember
+     - Hostname `momcal`, username `pi`, a password (used for `sudo` and
+       the desktop — SSH won't accept it)
      - Wi-Fi: **her** network name and password (or plan on Ethernet)
      - Locale/timezone: hers (e.g. `America/Denver`)
-     - Services: **enable SSH**
-2. **First boot** on any screen, landscape is fine. Plug in power and wait
-   2–3 minutes. Open a terminal and update:
+     - Services: **SSH with public-key authentication only**, using your
+       Mac's `~/.ssh/id_ed25519.pub`
+     - **Raspberry Pi Connect** on, signed in with your Raspberry Pi ID
+   - If the card doesn't appear in Imager: check the lock switch on the
+     card's edge (macOS reports it as read-only), then restart Imager.
+2. **First boot** on any screen, landscape is fine. Put the card in the Pi,
+   connect HDMI, keyboard, and mouse, then plug in power **last**. First
+   boot takes 2–5 minutes and may reboot once.
+
+   If you used **her** Wi-Fi in Imager and you're at your place, the Pi
+   won't get online. Join your Wi-Fi from the network icon in the top bar
+   (it remembers both), or plug in Ethernet.
+
+   Then open a terminal (or SSH in from your Mac with `ssh pi@momcal.local`)
+   and update:
    ```bash
    sudo apt update && sudo apt full-upgrade -y && sudo reboot
    ```
+   Once it's back, confirm it shows up at https://connect.raspberrypi.com.
 3. **Install the app from this branch:**
    ```bash
    git clone -b mom-vertical https://github.com/jdlax00/pi3calendar.git ~/picalendar
@@ -38,13 +63,18 @@ microSD card, HDMI cable, USB keyboard + mouse for setup.
    to `~/.config/labwc/autostart`, including the screen rotation.
 4. **Set her location** in `~/picalendar/config.json` (`latitude`,
    `longitude`, `timezone`, `location_label`).
-5. **Remote access (strongly recommended — the Pi will be at her house):**
+5. **Remote access** is covered by **Raspberry Pi Connect**: from anywhere,
+   open https://connect.raspberrypi.com → `momcal` → **Remote shell**, then
+   run `scripts/refresh.sh` or `scripts/kiosk.sh`. No router setup needed.
+
+   Optional: Tailscale. Connect is a browser terminal only. If you also want
+   `ssh`/`scp` from your Mac or the remote DevTools at `:9222` while the Pi
+   is at her house, install Tailscale (https://tailscale.com/download) on
+   both the Pi and your Mac:
    ```bash
    curl -fsSL https://tailscale.com/install.sh | sh
    sudo tailscale up
    ```
-   Now you can `ssh pi@momcal` from home and run `scripts/refresh.sh` or
-   `scripts/kiosk.sh`.
 6. **Dry run** with demo data: set `"fixtures": true` in `config.json`,
    `sudo systemctl restart picalendar`, `sudo reboot`. You should see the
    agenda (sideways, until the TV is rotated). Set `"fixtures": false` when
@@ -57,10 +87,12 @@ her Google account can authorize it. Google will warn that the app isn't
 verified — click **Advanced → Go to piCalendar (unsafe)**. That's expected
 for a personal app.
 
-1. Copy your existing OAuth client file to her Pi:
+1. Copy your existing OAuth client file to her Pi. Do this **while the Pi
+   is still on your network** (these use `momcal.local`, which only resolves
+   on the same Wi-Fi):
    ```bash
-   ssh pi@momcal mkdir -p /home/pi/.config/picalendar
-   scp ~/.config/picalendar/credentials.json pi@momcal:/home/pi/.config/picalendar/
+   ssh pi@momcal.local mkdir -p /home/pi/.config/picalendar
+   scp ~/.config/picalendar/credentials.json pi@momcal.local:/home/pi/.config/picalendar/
    ```
 2. Sign in **as her**. Pick one:
    - **At the Pi** (keyboard attached, easiest before the TV is rotated):
@@ -71,9 +103,11 @@ for a personal app.
      access.
    - **From your laptop**, if the Pi is already on the wall: move your own
      `~/.config/picalendar/token.json` aside, run
-     `python -m backend.oauth_init` locally, let her sign in, then
-     `scp ~/.config/picalendar/token.json pi@momcal:/home/pi/.config/picalendar/`
-     and put your own token back.
+     `python -m backend.oauth_init` locally, let her sign in, then copy the
+     token over. Without Tailscale, `scp` only works on the same network;
+     otherwise paste the file's contents into
+     `~/.config/picalendar/token.json` from Connect's remote shell. Put your
+     own token back afterward.
 3. Restart and check:
    ```bash
    sudo systemctl restart picalendar
@@ -116,15 +150,15 @@ for a personal app.
    `ROTATION=270 bash scripts/install.sh` on a fresh autostart) and reboot.
    You can also try it live from the Pi's desktop: Control Centre →
    **Screens** → right-click the HDMI output → **Orientation**.
-5. **Check it from your laptop.** Open `http://momcal:9222` (Chromium
-   DevTools) and run `innerWidth + "x" + innerHeight` in the console. It
+5. **Check it from your laptop** on her Wi-Fi (or over Tailscale). Open
+   `http://momcal.local:9222` (Chromium DevTools) and run `innerWidth + "x" + innerHeight` in the console. It
    should say about `1080x1920` (or `768x1366`).
 6. **If it stutters**, the app switches itself to a lighter glass mode
    when the first frames are slow. You can confirm with
    `document.documentElement.dataset.perf` in DevTools (`"lite"` means it
    switched).
 
-## Everyday fixes (over SSH)
+## Everyday fixes (Connect remote shell, or SSH)
 
 | Problem | Fix |
 | --- | --- |
