@@ -24,12 +24,12 @@
   });
 
   const MS = 60 * 1000;
-  // Visible hour window on the grid. Exclusive end — [6, 22) = 6 AM through 9:59 PM.
-  // 16 rows fills the grid comfortably at 1080p; short events use a compact
+  // Visible hour window on the grid. Exclusive end — [8, 22) = 8 AM through 9:59 PM.
+  // 14 rows fills the grid comfortably at 1080p; short events use a compact
   // card style (smaller font, tighter padding) so they still read cleanly.
-  const HOUR_START = 6;
+  const HOUR_START = 8;
   const HOUR_END = 22;
-  const HOURS_COUNT = HOUR_END - HOUR_START; // 16 (6am through 9pm)
+  const HOURS_COUNT = HOUR_END - HOUR_START; // 14 (8am through 9pm)
   const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WEEKDAYS_FULL = [
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",

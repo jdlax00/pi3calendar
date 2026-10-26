@@ -49,8 +49,8 @@
   /* Time-gutter + grid sizing */
   --gutter: clamp(2.5rem, 3vw, 4rem);
   --row-h: minmax(2.1rem, 1fr);
-  --hours-count: 16;         /* 6 AM through 10 PM — must match HOUR_START/HOUR_END in app.js */
-  --hour-start: 6;
+  --hours-count: 14;         /* 8 AM through 10 PM — must match HOUR_START/HOUR_END in app.js */
+  --hour-start: 8;
 
   /* Glass defaults */
   --glass-blur: 24px;
