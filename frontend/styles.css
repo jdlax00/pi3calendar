@@ -219,7 +219,7 @@ button { font: inherit; color: inherit; }
   height: 100vh;
   padding: calc(var(--u) * 1);
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: calc(var(--u) * 0.7);
 }
 
@@ -304,46 +304,6 @@ button { font: inherit; color: inherit; }
   letter-spacing: 0.18em;
   font-size: var(--t-label);
   font-weight: 500;
-}
-
-/* ---------- Forecast pills --------------------------------------------- */
-.forecast {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: calc(var(--u) * 0.7);
-}
-.pill {
-  padding: calc(var(--u) * 0.75) calc(var(--u) * 1);
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: calc(var(--u) * 0.45);
-  border-radius: var(--r-md);
-}
-.pill__label {
-  font-family: var(--font-body);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: var(--t-label);
-  font-weight: 500;
-  color: var(--ink-muted);
-}
-.pill__icon { color: var(--ink); }
-.pill__icon svg {
-  width: calc(var(--u) * 1.6);
-  height: calc(var(--u) * 1.6);
-}
-.pill__hi {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 480;
-  font-size: calc(var(--t-body) * 1.1);
-  color: var(--ink);
-}
-.pill__lo {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 320;
-  font-size: calc(var(--t-body) * 1);
-  color: var(--ink-muted);
 }
 
 /* ---------- Week layout ------------------------------------------------- */
@@ -695,16 +655,8 @@ button { font: inherit; color: inherit; }
 [data-theme="night"] .header__weekday,
 [data-theme="night"] .dayhead__label,
 [data-theme="night"] .hour,
-[data-theme="night"] .header__loc,
-[data-theme="night"] .pill__label {
+[data-theme="night"] .header__loc {
   letter-spacing: 0.26em;
-}
-
-/* Forecast pill hi temp picks up a whisper of gold, so the eye catches the
-   high without the number shouting. */
-[data-theme="night"] .pill__hi {
-  color: var(--ink-strong);
-  font-variation-settings: "opsz" 48, "SOFT" 100, "wght" 520;
 }
 
 /* ---------- Perf degradation ------------------------------------------- */

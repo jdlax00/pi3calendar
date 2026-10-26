@@ -125,7 +125,6 @@
       const json = await r.json();
       STATE.weather = json;
       renderHeader();
-      renderForecast();
       evaluateTheme();
     } catch (e) {
       console.warn("fetchWeather failed", e);
@@ -175,24 +174,6 @@
     $("hdr-wdesc").textContent = w.current.description || "";
     $("hdr-loc").textContent = (STATE.config && STATE.config.location_label) || "";
     $("hdr-wicon").innerHTML = iconSvg(WMO_TO_ICON(w.current.weather_code));
-  }
-
-  // ---------- Forecast pills ---------------------------------------------
-  function renderForecast() {
-    const host = $("forecast");
-    host.innerHTML = "";
-    if (!STATE.weather) return;
-    const tpl = $("tpl-forecast-pill");
-    const days = STATE.weather.daily.slice(0, 7);
-    days.forEach((d) => {
-      const node = tpl.content.firstElementChild.cloneNode(true);
-      const date = parseISO(d.date);
-      node.querySelector(".pill__label").textContent = WEEKDAYS[date.getDay()];
-      node.querySelector(".pill__icon").innerHTML = iconSvg(WMO_TO_ICON(d.weather_code));
-      node.querySelector(".pill__hi").textContent = `${Math.round(d.high_f)}°`;
-      node.querySelector(".pill__lo").textContent = `${Math.round(d.low_f)}°`;
-      host.appendChild(node);
-    });
   }
 
   // ---------- Day headers + columns + hours ------------------------------
