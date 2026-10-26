@@ -94,7 +94,9 @@ def api_config():
         "location_label": cfg.get("location_label", ""),
         "fixtures": bool(cfg.get("fixtures") or USE_FIXTURES),
         "theme_override": cfg.get("theme_override"),  # "day" | "night" | null
-        "agenda_days": int(cfg.get("agenda_days", 7)),  # days after today
+        "agenda_days": int(cfg.get("agenda_days", 7)),  # days after today (max)
+        "agenda_min_days": int(cfg.get("agenda_min_days", 5)),  # floor when crowded
+        "screen_inset": float(cfg.get("screen_inset", 0)),  # % margin for overscan
     })
 
 

@@ -117,8 +117,9 @@
 
   // Drop rows from the end until the list fits its card, then say how many
   // were hidden. Runs after layout, so it measures real rendered heights.
+  // Returns the number of hidden events so render() can judge crowding.
   function fitList(list) {
-    if (list.scrollHeight <= list.clientHeight + 1) return;
+    if (list.scrollHeight <= list.clientHeight + 1) return 0;
     const rows = Array.from(list.querySelectorAll(".agev"));
     const more = document.createElement("li");
     more.className = "agev agev--more";
@@ -129,6 +130,7 @@
       hidden++;
       more.textContent = `+${hidden} more`;
     }
+    return hidden;
   }
 
   // Split the column's height between cards by water-filling: a quiet day
@@ -165,19 +167,38 @@
     cards.forEach((c, i) => { c.style.flex = `0 0 ${alloc[i]}px`; });
   }
 
-  function render(state, h) {
-    const host = h.$("portrait");
-    if (!host || !state.weekStart) return;
-    const days = ((state.config && state.config.agenda_days) || 7) + 1;
-
+  // Render today + `after` days and return how many events had to be hidden.
+  function build(host, state, h, after) {
     const frag = document.createDocumentFragment();
-    for (let i = 0; i < days; i++) {
+    for (let i = 0; i <= after; i++) {
       frag.appendChild(renderDay(i, addDays(state.weekStart, i), state, h));
     }
     host.replaceChildren(frag);
-    host.hidden = false;
     allocateHeights(host);
-    host.querySelectorAll(".agday__list").forEach(fitList);
+    let hidden = 0;
+    host.querySelectorAll(".agday__list").forEach((l) => { hidden += fitList(l); });
+    return hidden;
+  }
+
+  // Crowded week → show fewer days, so each remaining day gets more room.
+  // Starts at agenda_days and drops one day at a time until nothing is
+  // hidden, stopping at agenda_min_days (whatever still overflows there
+  // keeps its "+N more"). Deterministic for the same events, so the
+  // minute-tick re-render doesn't flicker between counts.
+  function render(state, h) {
+    const host = h.$("portrait");
+    if (!host || !state.weekStart) return;
+    const cfg = state.config || {};
+    const maxAfter = cfg.agenda_days || 7;
+    const minAfter = Math.min(cfg.agenda_min_days || 5, maxAfter);
+
+    // Overscan safety margin: screen_inset is a % of the screen's short side.
+    document.documentElement.style.setProperty("--screen-inset", `${Number(cfg.screen_inset) || 0}vmin`);
+
+    host.hidden = false;
+    for (let after = maxAfter; after >= minAfter; after--) {
+      if (build(host, state, h, after) === 0) break;
+    }
   }
 
   window.PiPortrait = { render };

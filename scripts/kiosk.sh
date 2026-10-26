@@ -79,8 +79,9 @@ kiosk_start() {
   # nohup + detached stdio so this survives the ssh session ending.
   nohup bash "${AUTOSTART}" </dev/null >/dev/null 2>&1 &
   disown
-  # Give chromium a few seconds to spawn.
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
+  # Give chromium time to spawn — the autostart waits ~3s+ for the backend
+  # before launching it (mom-vertical), so allow up to 15s.
+  for _ in $(seq 1 30); do
     is_running && break
     sleep 0.5
   done

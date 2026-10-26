@@ -6,6 +6,8 @@
   "fixtures": false,
   "theme_override": null,
   "agenda_days": 7,
+  "agenda_min_days": 5,
+  "screen_inset": 0,
   "hidden_titles": [],
   "calendar_ids": []
 }

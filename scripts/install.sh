@@ -76,8 +76,15 @@ if command -v labwc >/dev/null 2>&1; then
 
 # picalendar kiosk (mom-vertical: portrait)
 wlr-randr --output ${HDMI_OUTPUT} --transform ${ROTATION}
+# Rotation, the backend, and Chromium all start at login. Give the rotation
+# a moment and wait for the backend to answer, or Chromium opens first and
+# never shows. --password-store=basic skips the keyring unlock prompt.
+(
+sleep 3
+for _ in \$(seq 1 60); do curl -sf http://localhost:5000/api/config >/dev/null && break; sleep 2; done
 ${CHROMIUM_PKG} \\
   --kiosk \\
+  --password-store=basic \\
   --noerrdialogs \\
   --disable-infobars \\
   --disable-translate \\
@@ -88,7 +95,8 @@ ${CHROMIUM_PKG} \\
   --ignore-gpu-blocklist \\
   --enable-zero-copy \\
   --remote-debugging-port=9222 \\
-  http://localhost:5000 &
+  http://localhost:5000
+) &
 LABWC
     echo "    wrote ${LABWC_AUTOSTART} (rotation ${ROTATION} on ${HDMI_OUTPUT})"
   fi

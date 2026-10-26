@@ -10,23 +10,24 @@
 [data-layout="agenda"] {
   --u: 1.05vh;
 
-  --t-hero: 5.4vh;
-  --t-display: 3vh;
-  --t-label: 1.3vh;
-  --t-body: 1.7vh;
-  --t-small: 1.4vh;
+  --t-hero: 5vh;
+  --t-display: 2.8vh;
+  --t-label: 1.2vh;
+  --t-body: 1.55vh;
+  --t-small: 1.3vh;
 
   /* Agenda type */
-  --t-dayname: 2vh;
-  --t-event: 1.45vh;   /* ~28px at 1920 tall ≈ 1 cm on a 31.5" panel */
-  --t-evtime: 1.25vh;
-  --t-today-event: 1.65vh;
+  --t-dayname: 1.85vh;
+  --t-event: 1.35vh;   /* ~26px at 1920 tall ≈ 9 mm on a 31.5" panel */
+  --t-evtime: 1.15vh;
+  --t-today-event: 1.5vh;
 }
 
 /* ---------- Shell ------------------------------------------------------- */
 [data-layout="agenda"] .app {
   grid-template-rows: auto minmax(0, 1fr);
-  padding: calc(var(--u) * 1.2);
+  /* --screen-inset comes from config.json `screen_inset` (overscan margin). */
+  padding: calc(var(--u) * 1.2 + var(--screen-inset, 0px));
   gap: calc(var(--u) * 0.8);
 }
 
